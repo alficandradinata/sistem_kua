@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* [SISTEM KUA] sembunyikan elemen Alpine sebelum komponen ter-inisialisasi */
+[x-cloak] {
+    display: none !important;
+}
