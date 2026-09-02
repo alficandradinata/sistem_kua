@@ -56,7 +56,7 @@ class HolidayController extends Controller
     private function clashWarning(string $date): ?string
     {
         $count = Reservation::forDate($date)
-            ->where('status', '!=', Reservation::STATUS_CANCELLED)
+            ->active()
             ->count();
 
         return $count > 0

@@ -24,7 +24,7 @@ class ReservationController extends Controller
         ];
 
         $reservations = Reservation::query()
-            ->with(['user', 'service', 'queueDetail'])
+            ->with(['user', 'service', 'queueDetail', 'approvedBy', 'rejectedBy'])
             ->when($filters['status'], fn ($q, $s) => $q->status($s))
             ->when($filters['date'], fn ($q, $d) => $q->forDate($d))
             ->when($filters['service_id'], fn ($q, $id) => $q->where('service_id', $id))

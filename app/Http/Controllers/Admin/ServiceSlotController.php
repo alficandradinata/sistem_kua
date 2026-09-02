@@ -74,7 +74,7 @@ class ServiceSlotController extends Controller
             ->where('service_id', $slot->service_id)
             ->where('reservation_time', $slot->slot_start_time)
             ->whereDate('reservation_date', '>=', today())
-            ->where('status', '!=', Reservation::STATUS_CANCELLED)
+            ->active()
             ->exists();
     }
 }

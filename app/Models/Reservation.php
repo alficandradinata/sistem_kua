@@ -23,13 +23,28 @@ class Reservation extends Model
 
     public const STATUS_COMPLETED = 'completed';
 
+    /** Dibatalkan sendiri oleh warga. */
     public const STATUS_CANCELLED = 'cancelled';
+
+    /** Ditolak petugas KUA — beda urusan administratif dengan STATUS_CANCELLED. */
+    public const STATUS_REJECTED = 'rejected';
 
     public const STATUSES = [
         self::STATUS_PENDING => 'Menunggu',
         self::STATUS_APPROVED => 'Disetujui',
         self::STATUS_COMPLETED => 'Selesai',
         self::STATUS_CANCELLED => 'Dibatalkan',
+        self::STATUS_REJECTED => 'Ditolak',
+    ];
+
+    /**
+     * Status yang membuat reservasi berhenti memakai kuota slot. Dipakai lewat
+     * scope `active()` — jangan bandingkan langsung ke STATUS_CANCELLED saja,
+     * karena reservasi yang ditolak juga harus mengembalikan kuotanya.
+     */
+    public const STATUSES_INACTIVE = [
+        self::STATUS_CANCELLED,
+        self::STATUS_REJECTED,
     ];
 
     protected $fillable = [
@@ -39,6 +54,11 @@ class Reservation extends Model
         'reservation_time',
         'status',
         'notes',
+        'rejection_reason',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
         'reminded_at',
     ];
 
@@ -48,6 +68,10 @@ class Reservation extends Model
             'user_id' => 'integer',
             'service_id' => 'integer',
             'reservation_date' => 'date',
+            'approved_by' => 'integer',
+            'approved_at' => 'datetime',
+            'rejected_by' => 'integer',
+            'rejected_at' => 'datetime',
             'reminded_at' => 'datetime',
         ];
     }
@@ -67,6 +91,20 @@ class Reservation extends Model
     public function queueDetail(): HasOne
     {
         return $this->hasOne(QueueDetail::class);
+    }
+
+    /**
+     * Petugas yang menyetujui. FK eksplisit karena kolomnya bukan user_id —
+     * user_id itu milik warga pemohon.
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     // --- Scopes ---
@@ -96,6 +134,20 @@ class Reservation extends Model
         return $query->where('status', self::STATUS_CANCELLED);
     }
 
+    public function scopeRejected(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_REJECTED);
+    }
+
+    /**
+     * Reservasi yang masih memesan tempat — belum dibatalkan warga maupun
+     * ditolak petugas. Inilah yang menghabiskan kuota slot.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNotIn('status', self::STATUSES_INACTIVE);
+    }
+
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
@@ -122,12 +174,11 @@ class Reservation extends Model
     }
 
     /**
-     * Reservasi yang belum lewat dan belum dibatalkan.
+     * Reservasi yang belum lewat dan masih aktif (bukan dibatalkan / ditolak).
      */
     public function scopeUpcoming(Builder $query): Builder
     {
-        return $query->whereDate('reservation_date', '>=', today())
-            ->where('status', '!=', self::STATUS_CANCELLED);
+        return $query->whereDate('reservation_date', '>=', today())->active();
     }
 
     // --- Accessors ---
@@ -163,6 +214,29 @@ class Reservation extends Model
     }
 
     /**
+     * Jejak audit terbaca: siapa memutuskan dan kapan. Null kalau reservasi
+     * belum pernah diverifikasi petugas.
+     *
+     * Nama bisa kosong kalau akun petugasnya sudah dihapus (FK nullOnDelete),
+     * jadi tanggalnya tetap ditampilkan sebagai bukti keputusan itu ada.
+     */
+    public function getVerificationLogAttribute(): ?string
+    {
+        [$aksi, $petugas, $waktu] = match (true) {
+            $this->isRejected() && $this->rejected_at !== null => ['Ditolak', $this->rejectedBy?->name, $this->rejected_at],
+            $this->approved_at !== null => ['Disetujui', $this->approvedBy?->name, $this->approved_at],
+            default => [null, null, null],
+        };
+
+        if ($waktu === null) {
+            return null;
+        }
+
+        return $aksi.' oleh '.($petugas ?? 'petugas yang akunnya sudah dihapus')
+            .' · '.$waktu->locale('id')->translatedFormat('j M Y, H:i').' WIB';
+    }
+
+    /**
      * Kelas badge Tailwind sesuai status, untuk dipakai di view.
      */
     public function getStatusColorAttribute(): string
@@ -171,7 +245,10 @@ class Reservation extends Model
             self::STATUS_PENDING => 'bg-yellow-100 text-yellow-800',
             self::STATUS_APPROVED => 'bg-blue-100 text-blue-800',
             self::STATUS_COMPLETED => 'bg-green-100 text-green-800',
-            self::STATUS_CANCELLED => 'bg-red-100 text-red-800',
+            // Dibatalkan warga = netral; ditolak petugas = merah, karena
+            // yang kedua butuh tindak lanjut warga (perbaiki berkas, ajukan ulang).
+            self::STATUS_CANCELLED => 'bg-gray-200 text-gray-700',
+            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }
@@ -198,6 +275,11 @@ class Reservation extends Model
         return $this->status === self::STATUS_CANCELLED;
     }
 
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
     /**
      * Reservasi hanya bisa dibatalkan kalau belum selesai dan tanggalnya belum lewat.
      */
@@ -207,19 +289,26 @@ class Reservation extends Model
             && Carbon::parse($this->reservation_date)->startOfDay()->gte(today());
     }
 
-    public function approve(): bool
+    /**
+     * @param  int|null  $petugasId  penanggung jawab keputusan; default petugas yang login.
+     */
+    public function approve(?int $petugasId = null): bool
     {
-        return $this->update(['status' => self::STATUS_APPROVED]);
+        return $this->update([
+            'status' => self::STATUS_APPROVED,
+            'approved_by' => $petugasId ?? auth()->id(),
+            'approved_at' => now(),
+        ]);
     }
 
     /**
      * Setujui reservasi sekaligus terbitkan nomor antrean & kirim notifikasi ke warga.
      * Dibungkus transaksi supaya status dan nomor antrean tidak pernah terpisah.
      */
-    public function approveAndIssueQueue(): QueueDetail
+    public function approveAndIssueQueue(?int $petugasId = null): QueueDetail
     {
-        return DB::transaction(function (): QueueDetail {
-            $this->approve();
+        return DB::transaction(function () use ($petugasId): QueueDetail {
+            $this->approve($petugasId);
 
             $queue = $this->queueDetail()->firstOrCreate([], [
                 'queue_number' => QueueDetail::generateNumber($this->reservation_date->toDateString()),
@@ -236,13 +325,19 @@ class Reservation extends Model
 
     /**
      * Tolak reservasi (oleh petugas) berikut alasannya.
+     *
+     * Statusnya REJECTED, bukan CANCELLED: laporan KUA harus bisa memisahkan
+     * berkas yang ditolak dari reservasi yang dibatalkan warga sendiri.
+     * Alasannya masuk kolom sendiri, bukan menumpang `notes` milik warga.
      */
-    public function reject(?string $reason = null): bool
+    public function reject(?string $reason = null, ?int $petugasId = null): bool
     {
-        return DB::transaction(function () use ($reason): bool {
+        return DB::transaction(function () use ($reason, $petugasId): bool {
             $ok = $this->update([
-                'status' => self::STATUS_CANCELLED,
-                'notes' => $reason ? trim($this->notes."\n[Ditolak petugas] ".$reason) : $this->notes,
+                'status' => self::STATUS_REJECTED,
+                'rejection_reason' => $reason ? trim($reason) : null,
+                'rejected_by' => $petugasId ?? auth()->id(),
+                'rejected_at' => now(),
             ]);
 
             Notification::send(

@@ -52,7 +52,7 @@ class GenerateReport extends Command
 
         $this->info("Laporan {$report->type_label} periode {$report->period_label} tersimpan: "
             ."total {$report->total_reservations}, selesai {$report->total_completed}, "
-            ."dibatalkan {$report->total_cancelled}.");
+            ."ditolak {$report->total_rejected}, dibatalkan {$report->total_cancelled}.");
 
         return self::SUCCESS;
     }

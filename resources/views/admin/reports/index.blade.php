@@ -42,7 +42,7 @@
                         @endif
                     </p>
 
-                    <div class="mt-3 grid gap-3 sm:grid-cols-5">
+                    <div class="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
                         <div>
                             <p class="text-xs text-indigo-700">Total</p>
                             <p class="text-2xl font-bold text-indigo-900">{{ $preview['total'] }}</p>
@@ -79,7 +79,8 @@
                                 <th class="px-5 py-3">Periode</th>
                                 <th class="px-5 py-3 text-right">Total</th>
                                 <th class="px-5 py-3 text-right">Selesai</th>
-                                <th class="px-5 py-3 text-right">Batal</th>
+                                <th class="px-5 py-3 text-right">Ditolak</th>
+                                <th class="px-5 py-3 text-right">Dibatalkan</th>
                                 <th class="px-5 py-3 text-right">% Selesai</th>
                                 <th class="px-5 py-3">Dibuat oleh</th>
                                 <th class="px-5 py-3 text-right">Aksi</th>
@@ -91,7 +92,8 @@
                                     <td class="px-5 py-3 font-medium text-gray-900">{{ $report->period_label }}</td>
                                     <td class="px-5 py-3 text-right">{{ $report->total_reservations }}</td>
                                     <td class="px-5 py-3 text-right text-green-700">{{ $report->total_completed }}</td>
-                                    <td class="px-5 py-3 text-right text-red-700">{{ $report->total_cancelled }}</td>
+                                    <td class="px-5 py-3 text-right text-red-700">{{ $report->total_rejected }}</td>
+                                    <td class="px-5 py-3 text-right text-gray-600">{{ $report->total_cancelled }}</td>
                                     <td class="px-5 py-3 text-right">{{ $report->completion_rate }}%</td>
                                     <td class="px-5 py-3 text-gray-600">{{ $report->generatedBy?->name ?? '-' }}</td>
                                     <td class="px-5 py-3">
@@ -112,7 +114,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-5 py-10 text-center text-gray-500">
+                                    <td colspan="8" class="px-5 py-10 text-center text-gray-500">
                                         Belum ada laporan {{ strtolower(\App\Models\Report::TYPES[$type]) }} tersimpan.
                                     </td>
                                 </tr>

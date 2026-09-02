@@ -36,7 +36,26 @@
                         <dt class="text-gray-500">No. Antrean</dt>
                         <dd class="col-span-2 font-semibold">{{ $reservation->queueDetail->queue_number }}</dd>
                     @endif
+                    {{-- [SISTEM KUA] Jejak audit — warga berhak tahu siapa yang memutuskan --}}
+                    @if ($reservation->verification_log)
+                        <dt class="text-gray-500">Diverifikasi</dt>
+                        <dd class="col-span-2 text-gray-600">{{ $reservation->verification_log }}</dd>
+                    @endif
                 </dl>
+
+                {{-- [SISTEM KUA] Alasan penolakan punya kolomnya sendiri, tidak lagi
+                     menumpang `notes` milik warga — jadi ditampilkan terpisah. --}}
+                @if ($reservation->isRejected())
+                    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <p class="text-sm font-semibold text-red-900">Reservasi ini ditolak petugas</p>
+                        <p class="mt-1 text-sm text-red-800">
+                            {{ $reservation->rejection_reason ?: 'Petugas tidak mencantumkan alasan.' }}
+                        </p>
+                        <p class="mt-2 text-xs text-red-700">
+                            Anda bisa mengajukan reservasi baru setelah kendalanya diperbaiki.
+                        </p>
+                    </div>
+                @endif
 
                 <div class="flex items-center gap-3 pt-2 border-t">
                     <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">&larr; Kembali</a>

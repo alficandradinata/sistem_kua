@@ -76,6 +76,17 @@
                                     </td>
                                     <td class="px-5 py-3">
                                         <x-status-badge :color="$reservation->status_color" :label="$reservation->status_label" />
+                                        @if ($reservation->isRejected() && $reservation->rejection_reason)
+                                            <p class="mt-1 max-w-[16rem] text-xs text-gray-500">
+                                                {{ $reservation->rejection_reason }}
+                                            </p>
+                                        @endif
+                                        {{-- [SISTEM KUA] Jejak audit: penanggung jawab keputusan --}}
+                                        @if ($reservation->verification_log)
+                                            <p class="mt-1 max-w-[16rem] text-xs text-gray-400">
+                                                {{ $reservation->verification_log }}
+                                            </p>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-3">
                                         @if ($reservation->isPending())

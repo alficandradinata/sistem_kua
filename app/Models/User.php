@@ -187,6 +187,23 @@ class User extends Authenticatable
     // --- Helper methods ---
 
     /**
+     * Akun ini pernah memutuskan sesuatu sebagai petugas — menyetujui/menolak
+     * reservasi, atau memanggil/melayani antrean.
+     *
+     * Dipakai untuk menahan penghapusan akun: jejak audit harus tetap bisa
+     * menunjuk nama penanggung jawabnya.
+     */
+    public function hasVerificationHistory(): bool
+    {
+        return Reservation::where('approved_by', $this->id)
+            ->orWhere('rejected_by', $this->id)
+            ->exists()
+            || QueueDetail::where('called_by', $this->id)
+                ->orWhere('attended_by', $this->id)
+                ->exists();
+    }
+
+    /**
      * Jumlah notifikasi aplikasi yang belum dibaca, untuk badge di navbar.
      */
     public function unreadNotificationCount(): int

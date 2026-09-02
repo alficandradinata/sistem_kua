@@ -89,6 +89,14 @@ class UserController extends Controller
             ]);
         }
 
+        if ($user->hasVerificationHistory()) {
+            return back()->withErrors([
+                'user' => 'Akun ini tercatat pernah memverifikasi reservasi atau memanggil antrean. '
+                    .'Menghapusnya akan menghilangkan nama penanggung jawab pada jejak audit. '
+                    .'Ubah perannya saja bila hanya ingin mencabut akses.',
+            ]);
+        }
+
         $user->delete();
 
         return back()->with('status', 'Akun dihapus.');

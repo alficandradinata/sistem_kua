@@ -76,7 +76,8 @@ class ServiceSlot extends Model
 
     /**
      * Jumlah reservasi yang sudah memakai slot ini pada tanggal tertentu.
-     * Reservasi yang dibatalkan tidak dihitung agar kuotanya kembali tersedia.
+     * Reservasi yang dibatalkan warga maupun ditolak petugas tidak dihitung,
+     * agar kuotanya kembali tersedia.
      */
     public function bookedCount(string $date): int
     {
@@ -84,7 +85,7 @@ class ServiceSlot extends Model
             ->where('service_id', $this->service_id)
             ->whereDate('reservation_date', $date)
             ->where('reservation_time', $this->slot_start_time)
-            ->where('status', '!=', Reservation::STATUS_CANCELLED)
+            ->active()
             ->count();
     }
 

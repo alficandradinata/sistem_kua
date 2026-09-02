@@ -78,7 +78,10 @@ class ReportController extends Controller
             // BOM UTF-8 supaya Excel membaca huruf beraksen & tanda baca dengan benar.
             fwrite($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ['Tanggal', 'Jam', 'Nama Warga', 'Layanan', 'Status', 'No. Antrean']);
+            fputcsv($handle, [
+                'Tanggal', 'Jam', 'Nama Warga', 'Layanan', 'Status', 'No. Antrean',
+                'Alasan Penolakan', 'Diverifikasi Oleh', 'Waktu Verifikasi', 'Petugas Loket',
+            ]);
 
             $report->reservationsQuery()->chunk(200, function ($rows) use ($handle) {
                 foreach ($rows as $reservation) {
@@ -89,6 +92,12 @@ class ReportController extends Controller
                         $reservation->service?->name,
                         $reservation->status_label,
                         $reservation->queueDetail?->queue_number ?? '-',
+                        $reservation->rejection_reason ?? '',
+                        // Jejak audit: penanggung jawab verifikasi & pelayanan loket.
+                        $reservation->rejectedBy?->name ?? $reservation->approvedBy?->name ?? '',
+                        ($reservation->rejected_at ?? $reservation->approved_at)?->format('Y-m-d H:i') ?? '',
+                        $reservation->queueDetail?->attendedBy?->name
+                            ?? $reservation->queueDetail?->calledBy?->name ?? '',
                     ]);
                 }
             });

@@ -34,6 +34,7 @@ class Report extends Model
         'total_reservations',
         'total_completed',
         'total_cancelled',
+        'total_rejected',
         'generated_by',
     ];
 
@@ -44,6 +45,7 @@ class Report extends Model
             'total_reservations' => 'integer',
             'total_completed' => 'integer',
             'total_cancelled' => 'integer',
+            'total_rejected' => 'integer',
             'generated_by' => 'integer',
         ];
     }
@@ -129,6 +131,7 @@ class Report extends Model
             'total_reservations' => $stats['total'],
             'total_completed' => $stats[Reservation::STATUS_COMPLETED],
             'total_cancelled' => $stats[Reservation::STATUS_CANCELLED],
+            'total_rejected' => $stats[Reservation::STATUS_REJECTED],
             'generated_by' => $userId,
         ];
 
@@ -164,6 +167,7 @@ class Report extends Model
             ->selectRaw('services.name as service_name, COUNT(*) as total')
             ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed', [Reservation::STATUS_COMPLETED])
             ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as cancelled', [Reservation::STATUS_CANCELLED])
+            ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as rejected', [Reservation::STATUS_REJECTED])
             ->get();
     }
 
@@ -191,13 +195,15 @@ class Report extends Model
             $total = (int) $statuses->sum();
             $completed = (int) $statuses->get(Reservation::STATUS_COMPLETED, 0);
             $cancelled = (int) $statuses->get(Reservation::STATUS_CANCELLED, 0);
+            $rejected = (int) $statuses->get(Reservation::STATUS_REJECTED, 0);
 
             $trend->push((object) [
                 'date' => $day->copy(),
                 'total' => $total,
                 'completed' => $completed,
                 'cancelled' => $cancelled,
-                'pending' => $total - $completed - $cancelled,
+                'rejected' => $rejected,
+                'pending' => $total - $completed - $cancelled - $rejected,
             ]);
         }
 
@@ -212,7 +218,12 @@ class Report extends Model
         [$start, $end] = $this->range();
 
         return Reservation::betweenDates($start->toDateString(), $end->toDateString())
-            ->with(['user', 'service', 'queueDetail'])
+            // approvedBy/rejectedBy & petugas loket ikut dimuat karena dipakai
+            // kolom jejak audit di ekspor CSV.
+            ->with([
+                'user', 'service', 'approvedBy', 'rejectedBy',
+                'queueDetail.calledBy', 'queueDetail.attendedBy',
+            ])
             ->orderBy('reservation_date')
             ->orderBy('reservation_time');
     }
@@ -259,30 +270,46 @@ class Report extends Model
      */
     public function getCompletionRateAttribute(): float
     {
-        if ($this->total_reservations <= 0) {
-            return 0.0;
-        }
-
-        return round($this->total_completed / $this->total_reservations * 100, 2);
+        return $this->rateOf($this->total_completed);
     }
 
     /**
-     * Persentase reservasi yang dibatalkan.
+     * Persentase reservasi yang dibatalkan warga sendiri.
      */
     public function getCancellationRateAttribute(): float
     {
+        return $this->rateOf($this->total_cancelled);
+    }
+
+    /**
+     * Persentase berkas yang ditolak petugas — angka mutu layanan, dipisah
+     * dari pembatalan warga yang bukan urusan KUA.
+     */
+    public function getRejectionRateAttribute(): float
+    {
+        return $this->rateOf($this->total_rejected);
+    }
+
+    /**
+     * Reservasi yang belum selesai, belum dibatalkan, dan belum ditolak.
+     */
+    public function getTotalPendingAttribute(): int
+    {
+        return max(0, $this->total_reservations
+            - $this->total_completed
+            - $this->total_cancelled
+            - $this->total_rejected);
+    }
+
+    /**
+     * Persentase satu angka terhadap total reservasi periode ini.
+     */
+    private function rateOf(int $jumlah): float
+    {
         if ($this->total_reservations <= 0) {
             return 0.0;
         }
 
-        return round($this->total_cancelled / $this->total_reservations * 100, 2);
-    }
-
-    /**
-     * Reservasi yang belum selesai maupun dibatalkan.
-     */
-    public function getTotalPendingAttribute(): int
-    {
-        return max(0, $this->total_reservations - $this->total_completed - $this->total_cancelled);
+        return round($jumlah / $this->total_reservations * 100, 2);
     }
 }

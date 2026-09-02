@@ -56,8 +56,13 @@
             <div class="label">{{ $report->completion_rate }}% dari total</div>
         </td>
         <td>
-            <div class="label">Dibatalkan / ditolak</div>
-            <div class="nilai merah">{{ $report->total_cancelled }}</div>
+            <div class="label">Ditolak petugas</div>
+            <div class="nilai merah">{{ $report->total_rejected }}</div>
+            <div class="label">{{ $report->rejection_rate }}% dari total</div>
+        </td>
+        <td>
+            <div class="label">Dibatalkan warga</div>
+            <div class="nilai">{{ $report->total_cancelled }}</div>
             <div class="label">{{ $report->cancellation_rate }}% dari total</div>
         </td>
         <td>
@@ -75,7 +80,8 @@
             <th>Layanan</th>
             <th class="angka">Total</th>
             <th class="angka">Selesai</th>
-            <th class="angka">Batal</th>
+            <th class="angka">Ditolak</th>
+            <th class="angka">Dibatalkan</th>
         </tr>
     </thead>
     <tbody>
@@ -84,10 +90,11 @@
                 <td>{{ $row->service_name }}</td>
                 <td class="angka">{{ $row->total }}</td>
                 <td class="angka hijau">{{ $row->completed }}</td>
-                <td class="angka merah">{{ $row->cancelled }}</td>
+                <td class="angka merah">{{ $row->rejected }}</td>
+                <td class="angka">{{ $row->cancelled }}</td>
             </tr>
         @empty
-            <tr><td colspan="4" class="kosong">Tidak ada reservasi pada periode ini.</td></tr>
+            <tr><td colspan="5" class="kosong">Tidak ada reservasi pada periode ini.</td></tr>
         @endforelse
     </tbody>
 </table>
@@ -101,6 +108,7 @@
                 <th class="angka">Total</th>
                 <th class="angka">Selesai</th>
                 <th class="angka">Belum tuntas</th>
+                <th class="angka">Ditolak</th>
                 <th class="angka">Dibatalkan</th>
             </tr>
         </thead>
@@ -111,6 +119,7 @@
                     <td class="angka">{{ $hari->total }}</td>
                     <td class="angka">{{ $hari->completed }}</td>
                     <td class="angka">{{ $hari->pending }}</td>
+                    <td class="angka">{{ $hari->rejected }}</td>
                     <td class="angka">{{ $hari->cancelled }}</td>
                 </tr>
             @endforeach

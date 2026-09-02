@@ -79,7 +79,7 @@ class ReservationController extends Controller
         $sudahAda = Reservation::forUser($request->user()->id)
             ->where('service_id', $data['service_id'])
             ->whereDate('reservation_date', $date)
-            ->where('status', '!=', Reservation::STATUS_CANCELLED)
+            ->active()
             ->exists();
 
         if ($sudahAda) {

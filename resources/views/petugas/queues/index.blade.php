@@ -86,6 +86,11 @@
                                         @else
                                             <x-status-badge color="bg-yellow-100 text-yellow-800" label="Menunggu" />
                                         @endif
+
+                                        {{-- [SISTEM KUA] Jejak audit: petugas loket penanggung jawab --}}
+                                        @if ($queue->handled_by_label)
+                                            <div class="mt-1 text-xs text-gray-400">{{ $queue->handled_by_label }}</div>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-3 text-right">
                                         @if (! $queue->is_called)

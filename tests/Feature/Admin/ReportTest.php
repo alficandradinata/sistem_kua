@@ -87,6 +87,44 @@ class ReportTest extends TestCase
         $this->assertSame($date, $report->report_date->toDateString());
     }
 
+    /**
+     * Inti poin ini: laporan resmi harus memisahkan berkas yang ditolak KUA
+     * dari reservasi yang dibatalkan warga sendiri.
+     */
+    public function test_report_separates_rejected_from_cancelled(): void
+    {
+        $date = '2026-03-12';
+
+        $this->makeReservation($date, Reservation::STATUS_COMPLETED, '08:00:00');
+        $this->makeReservation($date, Reservation::STATUS_CANCELLED, '09:00:00');
+        $this->makeReservation($date, Reservation::STATUS_REJECTED, '10:00:00');
+        $this->makeReservation($date, Reservation::STATUS_REJECTED, '11:00:00');
+
+        $this->actingAs($this->admin)->post(route('admin.reports.store'), [
+            'report_type' => Report::TYPE_DAILY,
+            'report_date' => $date,
+        ])->assertRedirect();
+
+        $report = Report::first();
+
+        $this->assertSame(4, $report->total_reservations);
+        $this->assertSame(1, $report->total_cancelled);
+        $this->assertSame(2, $report->total_rejected);
+        $this->assertSame(0, $report->total_pending);
+        $this->assertSame(25.0, $report->cancellation_rate);
+        $this->assertSame(50.0, $report->rejection_rate);
+
+        $rincian = $report->serviceBreakdown()->first();
+        $this->assertSame(1, (int) $rincian->cancelled);
+        $this->assertSame(2, (int) $rincian->rejected);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.reports.show', $report))
+            ->assertOk()
+            ->assertSee('Ditolak petugas')
+            ->assertSee('Dibatalkan warga');
+    }
+
     public function test_regenerating_same_period_updates_instead_of_duplicating(): void
     {
         $date = '2026-03-12';

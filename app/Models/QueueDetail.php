@@ -19,7 +19,9 @@ class QueueDetail extends Model
         'queue_number',
         'is_called',
         'called_at',
+        'called_by',
         'attended_at',
+        'attended_by',
         'notes',
     ];
 
@@ -29,7 +31,9 @@ class QueueDetail extends Model
             'reservation_id' => 'integer',
             'is_called' => 'boolean',
             'called_at' => 'datetime',
+            'called_by' => 'integer',
             'attended_at' => 'datetime',
+            'attended_by' => 'integer',
         ];
     }
 
@@ -38,6 +42,20 @@ class QueueDetail extends Model
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(Reservation::class);
+    }
+
+    /**
+     * Petugas loket yang memanggil nomor ini. FK eksplisit — tabel ini tidak
+     * punya user_id sendiri, warganya lewat relasi reservation.
+     */
+    public function calledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'called_by');
+    }
+
+    public function attendedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'attended_by');
     }
 
     // --- Scopes ---
@@ -86,22 +104,54 @@ class QueueDetail extends Model
         return $this->is_called ? 'Sedang dipanggil' : 'Menunggu';
     }
 
+    /**
+     * Petugas loket penanggung jawab, untuk jejak audit. Hanya namanya — jamnya
+     * sudah tampil terpisah di papan antrean, jangan diulang.
+     *
+     * Nama bisa hilang kalau akun petugasnya terhapus (FK nullOnDelete),
+     * jadi barisnya tetap muncul supaya jelas keputusan itu ada pelakunya.
+     */
+    public function getHandledByLabelAttribute(): ?string
+    {
+        if ($this->attended_at) {
+            return 'Dilayani '.($this->attendedBy?->name ?? 'petugas yang akunnya sudah dihapus');
+        }
+
+        if ($this->called_at) {
+            return 'Dipanggil '.($this->calledBy?->name ?? 'petugas yang akunnya sudah dihapus');
+        }
+
+        return null;
+    }
+
     // --- Helper methods ---
 
-    public function markAsCalled(): bool
+    /**
+     * @param  int|null  $petugasId  petugas loket yang memanggil; default yang login.
+     */
+    public function markAsCalled(?int $petugasId = null): bool
     {
         return $this->update([
             'is_called' => true,
             'called_at' => now(),
+            'called_by' => $petugasId ?? auth()->id(),
         ]);
     }
 
-    public function markAsAttended(): bool
+    /**
+     * Antrean yang langsung diselesaikan tanpa dipanggil lebih dulu ikut
+     * dicatat pemanggilnya, supaya tidak ada baris tanpa penanggung jawab.
+     */
+    public function markAsAttended(?int $petugasId = null): bool
     {
+        $petugasId ??= auth()->id();
+
         return $this->update([
             'is_called' => true,
             'called_at' => $this->called_at ?? now(),
+            'called_by' => $this->called_by ?? $petugasId,
             'attended_at' => now(),
+            'attended_by' => $petugasId,
         ]);
     }
 

@@ -128,6 +128,61 @@ class ReservationFlowTest extends TestCase
         ])->assertSessionHasErrors('slot_id');
     }
 
+    /**
+     * Reservasi yang ditolak petugas harus melepas kuotanya, sama seperti yang
+     * dibatalkan warga — kalau tidak, satu penolakan menghanguskan satu slot.
+     */
+    public function test_rejected_reservation_frees_the_slot_quota(): void
+    {
+        $date = $this->nextDate();
+
+        $terisi = Reservation::create([
+            'user_id' => User::factory()->create()->id,
+            'service_id' => $this->service->id,
+            'reservation_date' => $date,
+            'reservation_time' => '08:00:00',
+            'status' => Reservation::STATUS_PENDING,
+        ]);
+
+        $this->assertFalse($this->slot->isAvailable($date));
+
+        $terisi->reject('Berkas belum lengkap');
+
+        $this->assertTrue($this->slot->fresh()->isAvailable($date));
+
+        $this->actingAs($this->warga)->post(route('reservations.store'), [
+            'service_id' => $this->service->id,
+            'reservation_date' => $date,
+            'slot_id' => $this->slot->id,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(2, Reservation::count());
+    }
+
+    /**
+     * Reservasi yang ditolak tidak boleh menghalangi warga mengajukan ulang
+     * di layanan & tanggal yang sama.
+     */
+    public function test_warga_can_rebook_after_rejection(): void
+    {
+        $date = $this->nextDate();
+        ServiceSlot::where('id', $this->slot->id)->update(['quota_per_day' => 5]);
+
+        $payload = [
+            'service_id' => $this->service->id,
+            'reservation_date' => $date,
+            'slot_id' => $this->slot->id,
+        ];
+
+        $this->actingAs($this->warga)->post(route('reservations.store'), $payload);
+        Reservation::first()->reject('Berkas belum lengkap');
+
+        $this->actingAs($this->warga)->post(route('reservations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(2, Reservation::count());
+    }
+
     public function test_warga_cannot_double_book_same_service_and_date(): void
     {
         $date = $this->nextDate();

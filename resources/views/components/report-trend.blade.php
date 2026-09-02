@@ -6,7 +6,8 @@
     $colors = [
         'completed' => '#0ca30c',   // selesai
         'pending' => '#fab219',     // belum tuntas
-        'cancelled' => '#d03b3b',   // dibatalkan
+        'rejected' => '#d03b3b',    // ditolak petugas
+        'cancelled' => '#8a8f98',   // dibatalkan warga
     ];
 
     $plotHeight = 150;                       // tinggi area plot (px), di luar label sumbu
@@ -15,7 +16,7 @@
     $adaData = $trend->sum('total') > 0;
 
     // Urutan tumpukan dari bawah ke atas; ujung data (paling atas) yang dibulatkan.
-    $urutan = ['completed', 'pending', 'cancelled'];
+    $urutan = ['completed', 'pending', 'rejected', 'cancelled'];
 @endphp
 
 <div class="overflow-hidden rounded-lg bg-white shadow-sm">
@@ -24,7 +25,7 @@
 
         {{-- Legenda: identitas tidak pernah lewat warna saja --}}
         <div class="flex flex-wrap items-center gap-4 text-xs text-gray-600">
-            @foreach (['completed' => 'Selesai', 'pending' => 'Belum tuntas', 'cancelled' => 'Dibatalkan'] as $key => $label)
+            @foreach (['completed' => 'Selesai', 'pending' => 'Belum tuntas', 'rejected' => 'Ditolak', 'cancelled' => 'Dibatalkan'] as $key => $label)
                 <span class="inline-flex items-center gap-1.5">
                     <span class="inline-block h-2.5 w-2.5 rounded-sm" style="background: {{ $colors[$key] }}"></span>
                     {{ $label }}
@@ -83,7 +84,7 @@
                                 <p class="font-semibold">{{ $hari->date->locale('id')->translatedFormat('D, j M') }}</p>
                                 <p class="mt-1 text-gray-300">Total {{ $hari->total }} reservasi</p>
                                 <p>Selesai {{ $hari->completed }} &middot; Belum tuntas {{ $hari->pending }}</p>
-                                <p>Dibatalkan {{ $hari->cancelled }}</p>
+                                <p>Ditolak {{ $hari->rejected }} &middot; Dibatalkan {{ $hari->cancelled }}</p>
                             </div>
                         </div>
                     @endforeach

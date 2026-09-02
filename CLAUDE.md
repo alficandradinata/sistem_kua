@@ -23,8 +23,9 @@ admin kelola master data & rekap laporan.
 
 - Panel petugas (`app/Http/Controllers/Petugas/`, route `petugas/*`): verifikasi reservasi
   (setujui → `Reservation::approveAndIssueQueue()` menerbitkan `QueueDetail` dalam transaksi +
-  notifikasi; tolak → `Reservation::reject($reason)` via `RejectReservationRequest`), dan papan
-  antrean harian (panggil / panggil-berikutnya / selesai dilayani).
+  notifikasi; tolak → `Reservation::reject($reason)` via `RejectReservationRequest` — statusnya
+  `rejected`, alasannya masuk kolom `rejection_reason`), dan papan antrean harian
+  (panggil / panggil-berikutnya / selesai dilayani).
 
 - Panel admin (`app/Http/Controllers/Admin/`, route `admin/*`, middleware `role:admin`):
   CRUD layanan, jam operasional (7 hari sekaligus), slot & kuota, hari libur, akun pengguna.
@@ -109,10 +110,12 @@ penyusun teks balasan, bukan aturan domain — `WhatsAppGateway` + `LogGateway`/
 (`Reservation`, `Schedule`, `AutoReply`).
 
 - **`Reservation`** — pusat data. `belongsTo` User & Service, `hasOne` QueueDetail. Status via
-  method `approve()` / `complete()` / `cancel()`; guard `canBeCancelled()`. Scope: `pending()`,
-  `today()`, `upcoming()`, `forUser()`, `forDate()`, dll.
+  method `approve()` / `complete()` / `cancel()` / `reject($reason)`; guard `canBeCancelled()`.
+  Scope: `pending()`, `active()`, `today()`, `upcoming()`, `forUser()`, `forDate()`, dll.
+  Relasi audit `approvedBy()` / `rejectedBy()` (FK eksplisit — `user_id` itu milik warga).
 - **`ServiceSlot`** — `remainingQuota(date)` / `isAvailable(date)` hitung sisa kuota,
-  mengecualikan reservasi `cancelled`. Inti validasi "slot penuh".
+  mengecualikan reservasi `cancelled` **dan** `rejected` (lewat scope `active()`).
+  Inti validasi "slot penuh".
 - **`Schedule`** — `Schedule::isOpenOn(date)` cek KUA buka (0=Minggu..6=Sabtu). Konstanta `DAYS`.
 - **`Holiday`** — `Holiday::isHoliday(date)` blokir tanggal libur.
 - **`Notification`** — `Notification::send(userId, message, type)`; scope `unread()`,
@@ -156,6 +159,20 @@ penyusun teks balasan, bukan aturan domain — `WhatsAppGateway` + `LogGateway`/
 - **`Report::generatedBy()`** foreign key eksplisit `'generated_by'`.
 - **String status/tipe/peran = konstanta model** (`Reservation::STATUS_*`, `User::ROLE_*`,
   `Notification::TYPE_*`, `Report::TYPE_*`). Jangan tulis literal.
+- **Jejak audit wajib ikut terisi.** Setiap keputusan petugas mencatat pelakunya:
+  `reservations.approved_by/approved_at` & `rejected_by/rejected_at`,
+  `queue_details.called_by` & `attended_by`. Diisi otomatis oleh method model
+  (`approve()`, `reject()`, `markAsCalled()`, `markAsAttended()`) yang default-nya
+  `auth()->id()` — di test lewat argumen `$petugasId`. FK-nya **`nullOnDelete()`, bukan
+  cascade**: menghapus akun petugas tidak boleh menghapus riwayat warga.
+  `User::hasVerificationHistory()` menahan penghapusan akun yang punya jejak.
+  Accessor terbaca: `Reservation::verification_log`, `QueueDetail::handled_by_label`.
+- **`cancelled` ≠ `rejected`.** `cancelled` = warga membatalkan sendiri, `rejected` = petugas
+  menolak berkas (alasan di `rejection_reason`, bukan menumpang `notes` milik warga). Laporan
+  menghitungnya terpisah (`total_cancelled` / `total_rejected`). Untuk "reservasi yang masih
+  memakai kuota" **pakai scope `Reservation::active()`** — jangan pernah menulis
+  `where('status', '!=', STATUS_CANCELLED)`, itu melewatkan yang ditolak sehingga slotnya
+  hangus. Daftarnya ada di `Reservation::STATUSES_INACTIVE`.
 - **Peran**: gate route dgn middleware `role:admin` / `role:petugas,admin`.
   `User::factory()->role($r)` untuk test. Registrasi publik selalu `warga`.
 - **Penanda `[SISTEM KUA]`** di setiap file yang kita buat/ubah (bukan file bawaan Breeze murni).

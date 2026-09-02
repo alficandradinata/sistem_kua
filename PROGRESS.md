@@ -60,13 +60,14 @@ sistem_kua/
 │   │   ├── Service.php ............................. 🟢
 │   │   ├── Schedule.php ............................ 🟢
 │   │   ├── ServiceSlot.php ......................... 🟢 logika "slot penuh"
-│   │   ├── Reservation.php ......................... 🟢 ⭐ MODEL INTI (+ sendReminder)
+│   │   ├── Reservation.php ......................... 🟢 ⭐ MODEL INTI (+ reject/active, jejak audit)
 │   │   ├── QueueDetail.php ......................... 🟢
 │   │   ├── Notification.php ........................ 🟡 in-app + teruskan ke WhatsApp
 │   │   ├── WhatsAppMessage.php .................... 🟢 riwayat pesan + jendela 24 jam
 │   │   ├── AutoReply.php .......................... 🟢 kata kunci → balasan
 │   │   ├── Holiday.php ............................. 🟢
 │   │   └── Report.php ............................. 🟢 rekap: periodRange/statsBetween/generateFor
+│   │                                                    (+ total_rejected & rejection_rate)
 │   └── Http/
 │       ├── Controllers/
 │       │   ├── PublicController.php ............... 🟢 landing page
@@ -122,7 +123,11 @@ sistem_kua/
 │   │   ├── 2026_09_02_090000_add_reminded_at_to_reservations_table.php  🟢 penanda pengingat
 │   │   ├── 2026_09_02_100000_create_whatsapp_messages_table.php  🟢 riwayat pesan WA
 │   │   ├── 2026_09_02_100100_create_auto_replies_table.php  🟢 kata kunci → balasan
-│   │   └── 2026_09_02_100200_normalize_user_phone_numbers.php  🟢 samakan format nomor
+│   │   ├── 2026_09_02_100200_normalize_user_phone_numbers.php  🟢 samakan format nomor
+│   │   ├── 2026_09_03_100000_split_rejected_from_cancelled_status.php  🟢 status `rejected`
+│   │   │   + kolom `rejection_reason` & `reports.total_rejected` (data lama ikut dipindah)
+│   │   └── 2026_09_03_110000_add_audit_trail_to_verification_and_queue.php  🟢 approved_by/
+│   │       rejected_by (+ waktunya) & called_by/attended_by — FK nullOnDelete, bukan cascade
 │   ├── factories/UserFactory.php .................. 🟡 default role + ->role() state
 │   └── seeders/
 │       ├── DatabaseSeeder.php .................... 🟡 panggil 5 seeder
@@ -162,11 +167,11 @@ sistem_kua/
 │   └── auth/register.blade.php .............. 🔵 field No. HP
 │
 ├── tests/Feature/RoleRedirectTest.php .......... 🟢 6 test redirect & akses peran
-├── tests/Feature/ReservationFlowTest.php ....... 🟢 9 test alur reservasi
-├── tests/Feature/Petugas/ReservationVerificationTest.php  🟢 7 test verifikasi
-├── tests/Feature/Petugas/QueueBoardTest.php .... 🟢 7 test papan antrean
-├── tests/Feature/Admin/MasterDataTest.php ...... 🟢 20 test master data
-├── tests/Feature/Admin/ReportTest.php .......... 🟢 10 test laporan & ekspor CSV
+├── tests/Feature/ReservationFlowTest.php ....... 🟢 11 test alur reservasi (+ kuota lepas saat ditolak)
+├── tests/Feature/Petugas/ReservationVerificationTest.php  🟢 11 test verifikasi, penolakan & audit
+├── tests/Feature/Petugas/QueueBoardTest.php .... 🟢 9 test papan antrean (+ jejak petugas loket)
+├── tests/Feature/Admin/MasterDataTest.php ...... 🟢 22 test master data (+ akun berjejak audit)
+├── tests/Feature/Admin/ReportTest.php .......... 🟢 11 test laporan & ekspor CSV (+ pisah ditolak/batal)
 ├── tests/Feature/Admin/GenerateReportCommandTest.php  🟢 7 test perintah & tren harian
 ├── tests/Feature/NotificationTest.php .......... 🟢 9 test notifikasi in-app
 ├── tests/Feature/TimezoneTest.php .............. 🟢 6 test pengunci zona WIB
@@ -199,14 +204,30 @@ sistem_kua/
 
 ## Berikutnya (ronde selanjutnya)
 
-Semua rencana ronde sebelumnya sudah dikerjakan. Kandidat berikutnya:
+Baru selesai:
+- **Pisah `rejected` dari `cancelled`** — laporan KUA bisa membedakan berkas yang ditolak
+  petugas dari reservasi yang dibatalkan warga.
+- **Jejak audit** — setiap persetujuan, penolakan, dan pemanggilan antrean tercatat
+  pelakunya; akun petugas yang punya jejak tidak bisa dihapus.
 
-1. **Notifikasi ringkas di dashboard warga** — mis. 3 notifikasi terakhir langsung terlihat
-   tanpa membuka halaman `/notifikasi`.
-2. **WhatsApp lanjutan** — tangani pesan gambar/lokasi (sekarang diabaikan), status pengiriman
-   (`statuses[]` dari webhook), dan penugasan percakapan ke petugas tertentu.
-3. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
-   di `routes/web.php` sekarang tidak berefek. Perlu SMTP dulu.
+Antre berikutnya, urut prioritas:
+
+1. **Paginasi dashboard warga** — `DashboardController::warga()` mengambil SEMUA reservasi
+   milik user tanpa paginasi. (Detail laporan sudah `paginate(15)`, tidak perlu diapa-apakan.)
+2. **Layar antrean publik** — `/antrean` tanpa login untuk ditayangkan di TV ruang tunggu.
+   Datanya sudah lengkap, tinggal view + auto-refresh. Nilai demo tinggi, effort rendah.
+3. **Tiket antrean bisa dicetak** — belum ada satu pun halaman cetak.
+4. **Ubah jadwal (reschedule)** — sekarang warga harus batal lalu pesan ulang.
+5. **Notifikasi ringkas di dashboard warga** — 3 notifikasi terakhir tanpa buka `/notifikasi`.
+6. **WhatsApp lanjutan** — pesan gambar/lokasi (sekarang diabaikan), status pengiriman
+   (`statuses[]` dari webhook), penugasan percakapan ke petugas tertentu.
+7. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
+   di `routes/web.php` sekarang **tidak berefek sama sekali** (kelihatan aman padahal tidak).
+   Perlu SMTP dulu; kalau belum ada, minimal copot `verified` dari route group.
+
+Rapi-rapi kecil yang belum dikerjakan: `AutoReplySeeder` belum tercatat di daftar seeder
+CLAUDE.md; judul halaman semua sama (`layouts/app.blade.php` cuma pakai `config('app.name')`);
+belum ada favicon; `resources/views/welcome.blade.php` bawaan Laravel masih menganggur.
 
 (Sudah ada, jangan dikerjakan ulang: filter tanggal papan antrean — `QueueController::index`
 menerima `?date=` dan view-nya punya date picker.)

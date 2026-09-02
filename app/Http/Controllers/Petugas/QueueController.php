@@ -20,7 +20,7 @@ class QueueController extends Controller
         $date = $request->date('date')?->toDateString() ?? today()->toDateString();
 
         $queues = QueueDetail::query()
-            ->with(['reservation.user', 'reservation.service'])
+            ->with(['reservation.user', 'reservation.service', 'calledBy', 'attendedBy'])
             ->forDate($date)
             ->orderBy('queue_number')
             ->get();

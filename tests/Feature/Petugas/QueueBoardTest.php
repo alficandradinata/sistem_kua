@@ -114,4 +114,45 @@ class QueueBoardTest extends TestCase
             ->patch(route('petugas.queues.callNext'))
             ->assertSessionHasErrors('queue');
     }
+
+    /**
+     * Jejak audit loket: petugas pemanggil & pelayan tercatat, dan namanya
+     * ikut tampil di papan antrean.
+     */
+    public function test_call_and_attend_record_the_officer(): void
+    {
+        $queue = $this->queue();
+
+        $this->actingAs($this->petugas)->patch(route('petugas.queues.call', $queue));
+        $this->assertSame($this->petugas->id, $queue->refresh()->called_by);
+
+        $lain = User::factory()->create(['role' => User::ROLE_PETUGAS]);
+        $this->actingAs($lain)->patch(route('petugas.queues.attend', $queue));
+
+        $queue->refresh();
+        // Pemanggil tidak boleh tertimpa oleh petugas yang menyelesaikan.
+        $this->assertSame($this->petugas->id, $queue->called_by);
+        $this->assertSame($lain->id, $queue->attended_by);
+
+        $this->actingAs($this->petugas)
+            ->get(route('petugas.queues.index'))
+            ->assertOk()
+            ->assertSee('Dilayani '.$lain->name);
+    }
+
+    /**
+     * Antrean yang langsung diselesaikan tanpa dipanggil tetap punya
+     * penanggung jawab — tidak boleh ada baris tanpa nama.
+     */
+    public function test_attending_without_calling_still_records_an_officer(): void
+    {
+        $queue = $this->queue();
+
+        $this->actingAs($this->petugas)->patch(route('petugas.queues.attend', $queue));
+
+        $queue->refresh();
+        $this->assertSame($this->petugas->id, $queue->called_by);
+        $this->assertSame($this->petugas->id, $queue->attended_by);
+        $this->assertNotNull($queue->called_at);
+    }
 }

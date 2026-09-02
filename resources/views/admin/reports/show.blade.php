@@ -37,7 +37,7 @@
             </p>
 
             {{-- Angka utama --}}
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="rounded-lg bg-white p-6 shadow-sm">
                     <p class="text-sm text-gray-500">Total reservasi</p>
                     <p class="mt-1 text-3xl font-bold text-gray-900">{{ $report->total_reservations }}</p>
@@ -48,8 +48,13 @@
                     <p class="mt-2 text-xs text-gray-500">{{ $report->completion_rate }}% dari total</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
-                    <p class="text-sm text-gray-500">Dibatalkan / ditolak</p>
-                    <p class="mt-1 text-3xl font-bold text-red-700">{{ $report->total_cancelled }}</p>
+                    <p class="text-sm text-gray-500">Ditolak petugas</p>
+                    <p class="mt-1 text-3xl font-bold text-red-700">{{ $report->total_rejected }}</p>
+                    <p class="mt-2 text-xs text-gray-500">{{ $report->rejection_rate }}% dari total</p>
+                </div>
+                <div class="rounded-lg bg-white p-6 shadow-sm">
+                    <p class="text-sm text-gray-500">Dibatalkan warga</p>
+                    <p class="mt-1 text-3xl font-bold text-gray-700">{{ $report->total_cancelled }}</p>
                     <p class="mt-2 text-xs text-gray-500">{{ $report->cancellation_rate }}% dari total</p>
                 </div>
                 <div class="rounded-lg bg-white p-6 shadow-sm">
@@ -75,7 +80,8 @@
                             <th class="px-5 py-3">Layanan</th>
                             <th class="px-5 py-3 text-right">Total</th>
                             <th class="px-5 py-3 text-right">Selesai</th>
-                            <th class="px-5 py-3 text-right">Batal</th>
+                            <th class="px-5 py-3 text-right">Ditolak</th>
+                            <th class="px-5 py-3 text-right">Dibatalkan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -84,10 +90,11 @@
                                 <td class="px-5 py-3 font-medium text-gray-900">{{ $row->service_name }}</td>
                                 <td class="px-5 py-3 text-right">{{ $row->total }}</td>
                                 <td class="px-5 py-3 text-right text-green-700">{{ $row->completed }}</td>
-                                <td class="px-5 py-3 text-right text-red-700">{{ $row->cancelled }}</td>
+                                <td class="px-5 py-3 text-right text-red-700">{{ $row->rejected }}</td>
+                                <td class="px-5 py-3 text-right text-gray-600">{{ $row->cancelled }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="px-5 py-10 text-center text-gray-500">Tidak ada reservasi pada periode ini.</td></tr>
+                            <tr><td colspan="5" class="px-5 py-10 text-center text-gray-500">Tidak ada reservasi pada periode ini.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

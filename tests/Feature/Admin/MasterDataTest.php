@@ -253,6 +253,42 @@ class MasterDataTest extends TestCase
             ->assertSessionHasErrors('user');
     }
 
+    /**
+     * Petugas yang pernah memverifikasi tidak boleh dihapus — jejak auditnya
+     * harus tetap bisa menunjuk nama penanggung jawab.
+     */
+    public function test_officer_with_verification_history_cannot_be_deleted(): void
+    {
+        $petugas = User::factory()->create(['role' => User::ROLE_PETUGAS]);
+        $warga = User::factory()->create(['role' => User::ROLE_WARGA]);
+
+        $reservation = Reservation::create([
+            'user_id' => $warga->id, 'service_id' => $this->service->id,
+            'reservation_date' => Carbon::tomorrow()->toDateString(),
+            'reservation_time' => '08:00:00', 'status' => Reservation::STATUS_PENDING,
+        ]);
+        $reservation->reject('Berkas belum lengkap', $petugas->id);
+
+        $this->assertTrue($petugas->hasVerificationHistory());
+
+        $this->actingAs($this->admin)->delete(route('admin.users.destroy', $petugas))
+            ->assertSessionHasErrors('user');
+
+        $this->assertModelExists($petugas);
+    }
+
+    public function test_officer_without_history_can_still_be_deleted(): void
+    {
+        $petugas = User::factory()->create(['role' => User::ROLE_PETUGAS]);
+
+        $this->assertFalse($petugas->hasVerificationHistory());
+
+        $this->actingAs($this->admin)->delete(route('admin.users.destroy', $petugas))
+            ->assertSessionHasNoErrors();
+
+        $this->assertModelMissing($petugas);
+    }
+
     public function test_updating_user_without_password_keeps_old_password(): void
     {
         $warga = User::factory()->create(['role' => User::ROLE_WARGA]);
