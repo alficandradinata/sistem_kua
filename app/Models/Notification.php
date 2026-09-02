@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\SendWhatsAppMessage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -101,15 +102,42 @@ class Notification extends Model
 
     /**
      * Buat sekaligus kirim notifikasi ke seorang user.
+     *
+     * Selain baris in-app (lonceng), pesan yang sama diteruskan ke WhatsApp bila
+     * kanal itu aktif dan user punya nomor. Dengan begitu semua pemanggil lama
+     * (setujui / tolak / pengingat H-1 / panggil antrean) ikut mengirim WA tanpa
+     * perlu diubah.
      */
     public static function send(int $userId, string $message, string $type = self::TYPE_IN_APP): self
     {
-        return static::create([
+        $notification = static::create([
             'user_id' => $userId,
             'message' => $message,
             'type' => $type,
             'is_read' => false,
             'sent_at' => now(),
         ]);
+
+        $notification->forwardToWhatsApp();
+
+        return $notification;
+    }
+
+    /**
+     * Teruskan isi notifikasi ke WhatsApp penerimanya, bila memungkinkan.
+     */
+    public function forwardToWhatsApp(): void
+    {
+        if (! config('whatsapp.enabled')) {
+            return;
+        }
+
+        $nomor = $this->user()->value('phone');
+
+        if (! $nomor) {
+            return;
+        }
+
+        SendWhatsAppMessage::dispatch($nomor, $this->message);
     }
 }

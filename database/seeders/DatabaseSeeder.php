@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             ServiceSlotSeeder::class,
             HolidaySeeder::class,
+            AutoReplySeeder::class,
         ]);
     }
 }

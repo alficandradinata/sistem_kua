@@ -53,6 +53,31 @@
                 </div>
             </div>
 
+            {{-- [SISTEM KUA] Koordinasi lewat WhatsApp, pesan sudah terisi konteks reservasi ini --}}
+            @php
+                $waKua = config('whatsapp.contact_number');
+                $waPesan = 'Halo KUA, saya ingin berkoordinasi soal reservasi '
+                    .$reservation->service->name.' pada '.$reservation->full_date
+                    .' pukul '.$reservation->formatted_time
+                    .($reservation->queueDetail ? ' (antrean '.$reservation->queueDetail->queue_number.')' : '')
+                    .'.';
+                $waLink = \App\Support\PhoneNumber::waMeLink($waKua, $waPesan);
+            @endphp
+            @if ($waLink)
+                <a href="{{ $waLink }}" target="_blank" rel="noopener"
+                   class="flex items-center justify-between gap-4 rounded-lg border border-green-200 bg-green-50 p-4 transition hover:bg-green-100">
+                    <div>
+                        <p class="text-sm font-semibold text-green-900">Perlu berkoordinasi soal reservasi ini?</p>
+                        <p class="mt-0.5 text-xs text-green-800">
+                            Chat petugas lewat WhatsApp — pesannya sudah kami isikan otomatis.
+                        </p>
+                    </div>
+                    <span class="shrink-0 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white">
+                        Chat WhatsApp
+                    </span>
+                </a>
+            @endif
+
         </div>
     </div>
 </x-app-layout>

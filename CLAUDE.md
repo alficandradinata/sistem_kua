@@ -52,6 +52,11 @@ admin kelola master data & rekap laporan.
   Pesan validasi ditulis agar `:attribute` tidak pernah di awal kalimat — kalau di awal,
   hurufnya jadi kecil ("email sudah digunakan"). Nama kolom ada di bagian `attributes`.
 
+- **WhatsApp** (`config/whatsapp.php`, `app/Services/WhatsApp/`, route `api/whatsapp/webhook`):
+  chat masuk dibalas otomatis (kata kunci admin → menu angka 1/2/3 → sapaan), dan notifikasi
+  sistem ikut dikirim ke WA. Panel `admin/whatsapp` (status + CRUD balasan + kirim uji) dan
+  inbox koordinasi `petugas/whatsapp` (baca & balas manual).
+
 **Belum ada:** notifikasi ringkas di dashboard warga, verifikasi email aktif (User belum
 implement `MustVerifyEmail`), SMTP produksi.
 
@@ -98,6 +103,11 @@ npm run dev                            # vite HMR
 
 **Semua logika bisnis ada di method model** (`app/Models/`), bukan service class. Controller tipis.
 
+**Satu pengecualian:** `app/Services/WhatsApp/` berisi *infrastruktur* (HTTP ke Meta) dan
+penyusun teks balasan, bukan aturan domain — `WhatsAppGateway` + `LogGateway`/`CloudApiGateway`
+(dipilih di `AppServiceProvider`) dan `AutoReplyResolver`. Keputusan domainnya tetap di model
+(`Reservation`, `Schedule`, `AutoReply`).
+
 - **`Reservation`** — pusat data. `belongsTo` User & Service, `hasOne` QueueDetail. Status via
   method `approve()` / `complete()` / `cancel()`; guard `canBeCancelled()`. Scope: `pending()`,
   `today()`, `upcoming()`, `forUser()`, `forDate()`, dll.
@@ -107,6 +117,14 @@ npm run dev                            # vite HMR
 - **`Holiday`** — `Holiday::isHoliday(date)` blokir tanggal libur.
 - **`Notification`** — `Notification::send(userId, message, type)`; scope `unread()`,
   `forUser()`, `latestFirst()`; accessor `time_ago`; `markAsRead()`.
+  **Sekaligus meneruskan pesan ke WhatsApp** lewat `forwardToWhatsApp()` bila user punya
+  `phone` — jadi jangan menambah pengiriman WA manual di pemanggilnya.
+- **`WhatsAppMessage`** — riwayat masuk/keluar; `withinSessionWindow($nomor)` menentukan
+  boleh-tidaknya kirim teks bebas (jendela 24 jam Cloud API). Tabelnya `whatsapp_messages`
+  (ditulis eksplisit di `$table`, karena Laravel menebaknya `whats_app_messages`).
+- **`AutoReply`** — kata kunci → balasan; `AutoReply::match($teks)`.
+- **Nomor HP selalu ternormalisasi 62…** lewat `App\Support\PhoneNumber` + mutator
+  `User::setPhoneAttribute`. Cari pemilik nomor dengan `User::findByPhone()`.
 - **`Report`** — rekap agregat. `periodRange($type,$date)` menormalkan tanggal ke awal periode,
   `statsBetween()` menghitung per status, `generateFor()` membuat/memperbarui satu baris laporan;
   `serviceBreakdown()` / `reservationsQuery()` / `dailyTrend()` untuk halaman rincian & grafik.

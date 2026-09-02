@@ -8,6 +8,7 @@
         ['route' => 'admin.holidays.index', 'label' => 'Hari Libur', 'pattern' => 'admin.holidays.*'],
         ['route' => 'admin.users.index', 'label' => 'Pengguna', 'pattern' => 'admin.users.*'],
         ['route' => 'admin.reports.index', 'label' => 'Laporan', 'pattern' => 'admin.reports.*'],
+        ['route' => 'admin.whatsapp.index', 'label' => 'WhatsApp', 'pattern' => 'admin.whatsapp.*'],
     ];
 @endphp
 

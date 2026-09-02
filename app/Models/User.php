@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\PhoneNumber;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -99,6 +100,42 @@ class User extends Authenticatable
     public function scopeRole(Builder $query, string $role): Builder
     {
         return $query->where('role', $role);
+    }
+
+    // --- Nomor HP / WhatsApp ---
+
+    /**
+     * Nomor disimpan selalu dalam format 62… supaya cocok dengan nomor pengirim
+     * dari WhatsApp Cloud API. Nomor yang jelas tidak valid disimpan null.
+     */
+    public function setPhoneAttribute(?string $value): void
+    {
+        $this->attributes['phone'] = PhoneNumber::normalize($value);
+    }
+
+    public function scopeByPhone(Builder $query, ?string $number): Builder
+    {
+        return $query->where('phone', PhoneNumber::normalize($number));
+    }
+
+    /**
+     * Cari pemilik sebuah nomor WhatsApp. Null bila nomornya belum terdaftar.
+     */
+    public static function findByPhone(?string $number): ?self
+    {
+        $normal = PhoneNumber::normalize($number);
+
+        return $normal ? static::where('phone', $normal)->first() : null;
+    }
+
+    public function getFormattedPhoneAttribute(): string
+    {
+        return PhoneNumber::format($this->phone);
+    }
+
+    public function hasWhatsApp(): bool
+    {
+        return $this->phone !== null;
     }
 
     /**

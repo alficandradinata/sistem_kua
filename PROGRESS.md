@@ -27,8 +27,13 @@ Legenda: 🟢 kita buat baru · 🟡 kita ubah dari bawaan · 🔵 kita ubah dar
 | 14. Pengingat H-1 (`pengingat:reservasi`) | ✅ selesai |
 | 15. Ekspor laporan PDF (dompdf) | ✅ selesai |
 | 16. Bahasa Indonesia (validasi, auth, UI Breeze) | ✅ selesai |
+| 17. WhatsApp: auto-reply chat masuk + notifikasi keluar | ✅ selesai (butuh setup Meta) |
 
-Test: **120 passed** (`php artisan test`).
+Test: **159 passed** (`php artisan test`).
+
+**WhatsApp:** kodenya lengkap & teruji dengan driver `log`. Untuk benar-benar hidup perlu
+akun WhatsApp Cloud API + webhook di URL publik HTTPS + `queue:work` berjalan —
+langkah lengkapnya ada di `.env.example`.
 
 **Siap deploy?** Kodenya sudah; setelan servernya belum. Checklist lengkap ada di
 bagian bawah `.env.example` (APP_ENV/APP_DEBUG, user DB non-root, SMTP, cron
@@ -57,7 +62,9 @@ sistem_kua/
 │   │   ├── ServiceSlot.php ......................... 🟢 logika "slot penuh"
 │   │   ├── Reservation.php ......................... 🟢 ⭐ MODEL INTI (+ sendReminder)
 │   │   ├── QueueDetail.php ......................... 🟢
-│   │   ├── Notification.php ........................ 🟢
+│   │   ├── Notification.php ........................ 🟡 in-app + teruskan ke WhatsApp
+│   │   ├── WhatsAppMessage.php .................... 🟢 riwayat pesan + jendela 24 jam
+│   │   ├── AutoReply.php .......................... 🟢 kata kunci → balasan
 │   │   ├── Holiday.php ............................. 🟢
 │   │   └── Report.php ............................. 🟢 rekap: periodRange/statsBetween/generateFor
 │   └── Http/
@@ -66,6 +73,9 @@ sistem_kua/
 │       │   ├── DashboardController.php ........... 🟢 dashboard per peran
 │       │   ├── ReservationController.php ........ 🟢 alur reservasi warga
 │       │   ├── NotificationController.php ...... 🟢 kotak notifikasi in-app
+│       │   ├── WhatsAppWebhookController.php ... 🟢 terima chat masuk dari Meta
+│       │   ├── Petugas/WhatsAppController.php .. 🟢 inbox koordinasi + balas manual
+│       │   ├── Admin/WhatsAppController.php .... 🟢 status kanal + CRUD balasan otomatis
 │       │   ├── Petugas/ReservationController.php  🟢 verifikasi (setujui/tolak)
 │       │   ├── Petugas/QueueController.php ...... 🟢 papan antrean (panggil/layani)
 │       │   ├── Admin/ServiceController.php ..... 🟢 CRUD layanan
@@ -86,9 +96,20 @@ sistem_kua/
 │   ├── GenerateReport.php ....................... 🟢 `laporan:buat` (dipakai scheduler)
 │   └── SendReservationReminders.php ............ 🟢 `pengingat:reservasi` (H-1)
 │
+├── app/Services/WhatsApp/ ........................... 🟢 infrastruktur kanal WhatsApp
+│   ├── WhatsAppGateway.php ...................... 🟢 kontrak pengirim
+│   ├── LogGateway.php ........................... 🟢 driver dev/test (tidak kirim)
+│   ├── CloudApiGateway.php ...................... 🟢 driver produksi (Meta)
+│   └── AutoReplyResolver.php .................... 🟢 penyusun balasan otomatis
+├── app/Jobs/SendWhatsAppMessage.php ................. 🟢 kirim via antrean (teks vs template)
+├── app/Support/PhoneNumber.php ...................... 🟢 normalisasi nomor ke 62…
+├── app/Providers/AppServiceProvider.php ............. 🟡 binding driver WhatsApp
+│
 ├── bootstrap/app.php ................................. 🟡 daftar alias middleware 'role'
 ├── routes/web.php ................................... 🔵 route landing + dashboard per peran
 ├── routes/console.php ............................... 🟡 jadwal laporan + pengingat H-1
+├── routes/api.php ................................... 🟢 webhook WhatsApp (tanpa CSRF/session)
+├── config/whatsapp.php .............................. 🟢 driver, kredensial, template, jeda
 │
 ├── lang/id/{validation,auth,passwords,pagination}.php  🟢 pesan bahasa Indonesia
 ├── lang/id.json ..................................... 🟢 string UI Breeze
@@ -98,7 +119,10 @@ sistem_kua/
 │   │   ├── 2026_09_01_203203..204000_*.php ........ 🟢 8 tabel domain (lihat versi lama di git-less)
 │   │   ├── 2026_09_01_204100_add_role_to_users_table.php  🟢 kolom role + phone
 │   │   ├── 2026_09_01_204200_harden_master_data_constraints.php  🟢 unique & FK master data
-│   │   └── 2026_09_02_090000_add_reminded_at_to_reservations_table.php  🟢 penanda pengingat
+│   │   ├── 2026_09_02_090000_add_reminded_at_to_reservations_table.php  🟢 penanda pengingat
+│   │   ├── 2026_09_02_100000_create_whatsapp_messages_table.php  🟢 riwayat pesan WA
+│   │   ├── 2026_09_02_100100_create_auto_replies_table.php  🟢 kata kunci → balasan
+│   │   └── 2026_09_02_100200_normalize_user_phone_numbers.php  🟢 samakan format nomor
 │   ├── factories/UserFactory.php .................. 🟡 default role + ->role() state
 │   └── seeders/
 │       ├── DatabaseSeeder.php .................... 🟡 panggil 5 seeder
@@ -106,7 +130,8 @@ sistem_kua/
 │       ├── ServiceSeeder.php ................... 🟢
 │       ├── ScheduleSeeder.php ................. 🟢
 │       ├── ServiceSlotSeeder.php ............. 🟢
-│       └── HolidaySeeder.php ................. 🟢
+│       ├── HolidaySeeder.php ................. 🟢
+│       └── AutoReplySeeder.php ............... 🟢 balasan WA bawaan
 │
 ├── resources/views/
 │   ├── public/home.blade.php .................... 🟢 landing page
@@ -126,6 +151,8 @@ sistem_kua/
 │   ├── admin/reports/show.blade.php ......... 🟢 tren + rincian + daftar + unduh CSV/PDF
 │   ├── admin/reports/pdf.blade.php .......... 🟢 template PDF (dompdf, tanpa Tailwind)
 │   ├── notifications/index.blade.php ........ 🟢 kotak notifikasi warga/petugas/admin
+│   ├── admin/whatsapp/index.blade.php ....... 🟢 status kanal + balasan otomatis + riwayat
+│   ├── petugas/whatsapp/index.blade.php ..... 🟢 inbox koordinasi (tampilan chat)
 │   ├── components/report-trend.blade.php ... 🟢 grafik batang tren harian (tanpa JS)
 │   ├── components/status-badge.blade.php .... 🟢 komponen badge status
 │   ├── components/alert.blade.php ........... 🟢 flash + error validasi
@@ -145,6 +172,10 @@ sistem_kua/
 ├── tests/Feature/TimezoneTest.php .............. 🟢 6 test pengunci zona WIB
 ├── tests/Feature/ReservationReminderTest.php ... 🟢 6 test pengingat H-1
 ├── tests/Feature/LocalizationTest.php .......... 🟢 7 test pesan bahasa Indonesia
+├── tests/Unit/PhoneNumberTest.php .............. 🟢 10 test normalisasi nomor
+├── tests/Feature/WhatsApp/WebhookTest.php ...... 🟢 9 test webhook & auto-reply
+├── tests/Feature/WhatsApp/OutboundTest.php ..... 🟢 7 test notifikasi keluar
+├── tests/Feature/WhatsApp/PanelTest.php ........ 🟢 14 test panel admin & inbox petugas
 │
 ├── config/app.php ............................... 🟡 timezone Asia/Jakarta + locale id
 ├── .env.example ................................. 🟡 MySQL + APP_TIMEZONE + checklist deploy
@@ -172,10 +203,10 @@ Semua rencana ronde sebelumnya sudah dikerjakan. Kandidat berikutnya:
 
 1. **Notifikasi ringkas di dashboard warga** — mis. 3 notifikasi terakhir langsung terlihat
    tanpa membuka halaman `/notifikasi`.
-2. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
+2. **WhatsApp lanjutan** — tangani pesan gambar/lokasi (sekarang diabaikan), status pengiriman
+   (`statuses[]` dari webhook), dan penugasan percakapan ke petugas tertentu.
+3. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
    di `routes/web.php` sekarang tidak berefek. Perlu SMTP dulu.
-3. **Terjemahan sisa UI** — teks di view kita ditulis langsung dalam bahasa Indonesia
-   (tidak lewat `__()`), jadi sudah Indonesia; yang lewat `__()` ada di `lang/id.json`.
 
 (Sudah ada, jangan dikerjakan ulang: filter tanggal papan antrean — `QueueController::index`
 menerima `?date=` dan view-nya punya date picker.)

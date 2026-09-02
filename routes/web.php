@@ -8,10 +8,12 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\ServiceSlotController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WhatsAppController as AdminWhatsAppController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Petugas\QueueController;
 use App\Http\Controllers\Petugas\ReservationController as PetugasReservationController;
+use App\Http\Controllers\Petugas\WhatsAppController as PetugasWhatsAppController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ReservationController;
@@ -44,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('reservasi/{reservation}/setujui', [PetugasReservationController::class, 'approve'])->name('reservations.approve');
             Route::patch('reservasi/{reservation}/tolak', [PetugasReservationController::class, 'reject'])->name('reservations.reject');
 
+            Route::get('whatsapp', [PetugasWhatsAppController::class, 'index'])->name('whatsapp.index');
+            Route::post('whatsapp/balas', [PetugasWhatsAppController::class, 'reply'])->name('whatsapp.reply');
+
             Route::get('antrean', [QueueController::class, 'index'])->name('queues.index');
             Route::patch('antrean/panggil-berikutnya', [QueueController::class, 'callNext'])->name('queues.callNext');
             Route::patch('antrean/{queue}/panggil', [QueueController::class, 'call'])->name('queues.call');
@@ -70,6 +75,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::resource('pengguna', UserController::class)
                 ->parameters(['pengguna' => 'user'])->except('show')->names('users');
+
+            Route::get('whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
+            Route::post('whatsapp/tes', [AdminWhatsAppController::class, 'test'])->name('whatsapp.test');
+            Route::post('whatsapp/balasan', [AdminWhatsAppController::class, 'storeReply'])->name('whatsapp.replies.store');
+            Route::put('whatsapp/balasan/{auto_reply}', [AdminWhatsAppController::class, 'updateReply'])->name('whatsapp.replies.update');
+            Route::delete('whatsapp/balasan/{auto_reply}', [AdminWhatsAppController::class, 'destroyReply'])->name('whatsapp.replies.destroy');
 
             Route::get('laporan', [ReportController::class, 'index'])->name('reports.index');
             Route::post('laporan', [ReportController::class, 'store'])->name('reports.store');

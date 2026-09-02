@@ -4,6 +4,7 @@
         ['route' => 'petugas.dashboard', 'label' => 'Ringkasan', 'pattern' => 'petugas.dashboard'],
         ['route' => 'petugas.reservations.index', 'label' => 'Verifikasi Reservasi', 'pattern' => 'petugas.reservations.*'],
         ['route' => 'petugas.queues.index', 'label' => 'Papan Antrean', 'pattern' => 'petugas.queues.*'],
+        ['route' => 'petugas.whatsapp.index', 'label' => 'Koordinasi WhatsApp', 'pattern' => 'petugas.whatsapp.*'],
     ];
 @endphp
 
