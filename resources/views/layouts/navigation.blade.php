@@ -30,6 +30,23 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                {{-- SISTEM KUA: lonceng notifikasi in-app --}}
+                @php $unread = auth()->user()->unreadNotificationCount(); @endphp
+                <a href="{{ route('notifications.index') }}" title="Notifikasi"
+                   class="relative me-3 rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700
+                          {{ request()->routeIs('notifications.*') ? 'bg-gray-100 text-gray-700' : '' }}">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                    @if ($unread > 0)
+                        <span class="absolute -right-0.5 -top-0.5 inline-flex min-w-[1.15rem] items-center justify-center
+                                     rounded-full bg-red-600 px-1 text-[0.65rem] font-bold leading-4 text-white">
+                            {{ $unread > 9 ? '9+' : $unread }}
+                        </span>
+                    @endif
+                </a>
+
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -101,6 +118,16 @@
             </div>
 
             <div class="mt-3 space-y-1">
+                {{-- SISTEM KUA: notifikasi in-app --}}
+                <x-responsive-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                    Notifikasi
+                    @if (auth()->user()->unreadNotificationCount() > 0)
+                        <span class="ms-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">
+                            {{ auth()->user()->unreadNotificationCount() }}
+                        </span>
+                    @endif
+                </x-responsive-nav-link>
+
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>

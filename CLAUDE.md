@@ -33,8 +33,16 @@ admin kelola master data & rekap laporan.
   `Report::generateFor()` (satu periode = satu baris, digenerate ulang = diperbarui) →
   halaman rincian per layanan + daftar reservasi + ekspor CSV.
 
-**Belum ada:** halaman notifikasi in-app untuk warga, grafik tren di laporan, penjadwalan
-laporan otomatis.
+- Notifikasi in-app (`NotificationController`, route `notifikasi*`, semua peran): lonceng +
+  badge di navbar (`User::unreadNotificationCount()`), kotak notifikasi dengan filter
+  belum dibaca, tandai dibaca (satu/semua), hapus.
+- Grafik tren harian di detail laporan (`x-report-trend`) — batang bertumpuk dirender
+  server-side, tanpa library JS; hanya muncul kalau periode lebih dari sehari.
+- Laporan otomatis: perintah `php artisan laporan:buat --type=... --date=...`
+  (`App\Console\Commands\GenerateReport`), dijadwalkan di `routes/console.php`
+  (harian 23:55, mingguan Minggu 23:57, bulanan hari terakhir 23:59).
+
+**Belum ada:** ekspor PDF, filter tanggal di papan antrean, pengingat H-1.
 
 ## Stack
 
@@ -66,6 +74,10 @@ php artisan test                       # semua test (SQLite in-memory)
 php artisan test --filter=NamaTest     # satu test / method
 ./vendor/bin/pint                      # format kode (jalankan sebelum selesai)
 
+php artisan laporan:buat --type=weekly  # buat laporan manual (dipakai scheduler)
+php artisan schedule:list              # cek jadwal laporan otomatis
+php artisan schedule:work              # jalankan scheduler saat dev
+
 npm run build                          # WAJIB setelah ubah .blade.php
 npm run dev                            # vite HMR
 ```
@@ -81,11 +93,12 @@ npm run dev                            # vite HMR
   mengecualikan reservasi `cancelled`. Inti validasi "slot penuh".
 - **`Schedule`** — `Schedule::isOpenOn(date)` cek KUA buka (0=Minggu..6=Sabtu). Konstanta `DAYS`.
 - **`Holiday`** — `Holiday::isHoliday(date)` blokir tanggal libur.
-- **`Notification`** — `Notification::send(userId, message, type)`.
+- **`Notification`** — `Notification::send(userId, message, type)`; scope `unread()`,
+  `forUser()`, `latestFirst()`; accessor `time_ago`; `markAsRead()`.
 - **`Report`** — rekap agregat. `periodRange($type,$date)` menormalkan tanggal ke awal periode,
   `statsBetween()` menghitung per status, `generateFor()` membuat/memperbarui satu baris laporan;
-  `serviceBreakdown()` / `reservationsQuery()` untuk halaman rincian. Accessor `period_label`,
-  `completion_rate`, `cancellation_rate`, `total_pending`.
+  `serviceBreakdown()` / `reservationsQuery()` / `dailyTrend()` untuk halaman rincian & grafik.
+  Accessor `period_label`, `completion_rate`, `cancellation_rate`, `total_pending`.
 - **`User`** — konstanta `ROLE_*`; `isWarga()/isPetugas()/isAdmin()/hasRole()/homeRoute()`;
   scope `role()`. Relasi `reservations()`, `appNotifications()`, `reports()`.
 
@@ -99,6 +112,11 @@ npm run dev                            # vite HMR
 - **Casts** pakai method `protected function casts(): array`, bukan properti `$casts`.
 - **Kolom TIME jangan di-cast** ke `datetime`. `reservation_time`, `slot_start_time`,
   `open_time`, `close_time` dibiarkan string `H:i:s`; format via accessor.
+- **Zona waktu `Asia/Jakarta`** (WIB) — `config/app.php` sengaja tidak lagi default UTC.
+  `today()`/`now()` dipakai papan antrean, `QueueDetail::generateNumber`, validasi
+  `after:today`, dan periode laporan; dengan UTC semuanya meleset sehari tiap 00:00–07:00 WIB.
+  Dikunci `tests/Feature/TimezoneTest.php` — jangan menulis test tanggal yang relatif ke
+  `today()` di situ, pakai tanggal literal supaya bedanya ketahuan.
 - **Tanggal Indonesia:** `Carbon::parse($x)->locale('id')->translatedFormat('j F Y')` — selalu
   `->locale('id')` eksplisit.
 - **Query kolom yang di-cast `date`** (`reservation_date`, `holiday_date`, `report_date`) selalu

@@ -168,6 +168,43 @@ class Report extends Model
     }
 
     /**
+     * Tren jumlah reservasi per hari sepanjang periode, untuk grafik batang.
+     * Hari tanpa reservasi tetap ikut (nilai 0) supaya sumbu waktunya utuh.
+     *
+     * @return Collection<int, object>
+     */
+    public function dailyTrend(): Collection
+    {
+        [$start, $end] = $this->range();
+
+        $perDay = Reservation::betweenDates($start->toDateString(), $end->toDateString())
+            ->selectRaw('reservation_date, status, COUNT(*) as jumlah')
+            ->groupBy('reservation_date', 'status')
+            ->get()
+            ->groupBy(fn ($row) => Carbon::parse($row->reservation_date)->toDateString());
+
+        $trend = collect();
+
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $statuses = ($perDay[$day->toDateString()] ?? collect())->pluck('jumlah', 'status');
+
+            $total = (int) $statuses->sum();
+            $completed = (int) $statuses->get(Reservation::STATUS_COMPLETED, 0);
+            $cancelled = (int) $statuses->get(Reservation::STATUS_CANCELLED, 0);
+
+            $trend->push((object) [
+                'date' => $day->copy(),
+                'total' => $total,
+                'completed' => $completed,
+                'cancelled' => $cancelled,
+                'pending' => $total - $completed - $cancelled,
+            ]);
+        }
+
+        return $trend;
+    }
+
+    /**
      * Query reservasi yang tercakup laporan ini (bukan relasi Eloquent).
      */
     public function reservationsQuery(): Builder

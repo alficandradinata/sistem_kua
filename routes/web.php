@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\ServiceSlotController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Petugas\QueueController;
 use App\Http\Controllers\Petugas\ReservationController as PetugasReservationController;
 use App\Http\Controllers\ProfileController;
@@ -21,6 +22,12 @@ Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     // Warga
     Route::get('/dashboard', [DashboardController::class, 'warga'])->name('dashboard');
+
+    // Notifikasi in-app (semua peran)
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::patch('/notifikasi/{notification}/baca', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::delete('/notifikasi/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('/reservasi/buat', [ReservationController::class, 'create'])->name('reservations.create');
     Route::post('/reservasi', [ReservationController::class, 'store'])->name('reservations.store');

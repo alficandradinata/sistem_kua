@@ -60,12 +60,18 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions.
+    |
+    | [SISTEM KUA] Default diubah dari "UTC" ke "Asia/Jakarta" (WIB). Seluruh
+    | domain aplikasi memakai tanggal lokal — `today()` untuk papan antrean,
+    | nomor antrean per tanggal, validasi `after:today`, dan periode laporan.
+    | Dengan UTC, tiap pukul 00:00–07:00 WIB `today()` masih memberi tanggal
+    | kemarin. Sengaja TIDAK dibiarkan default UTC supaya server baru tidak
+    | diam-diam kembali salah tanggal.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
 
     /*
     |--------------------------------------------------------------------------

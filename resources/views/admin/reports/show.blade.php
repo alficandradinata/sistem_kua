@@ -55,6 +55,11 @@
                 </div>
             </div>
 
+            {{-- Tren harian: hanya berguna kalau periodenya lebih dari sehari --}}
+            @if (! $periodStart->isSameDay($periodEnd))
+                <x-report-trend :trend="$report->dailyTrend()" />
+            @endif
+
             {{-- Rincian per layanan --}}
             <div class="overflow-hidden rounded-lg bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-5 py-3 text-sm font-semibold text-gray-700">

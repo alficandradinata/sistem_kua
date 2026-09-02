@@ -20,8 +20,16 @@ Legenda: 🟢 kita buat baru · 🟡 kita ubah dari bawaan · 🔵 kita ubah dar
 | 7. Panel petugas (verifikasi + papan antrean) | ✅ selesai |
 | 8. Panel admin master data (CRUD layanan/jadwal/slot/libur/pengguna) | ✅ selesai |
 | 9. Laporan rekap (harian/mingguan/bulanan + ekspor CSV) | ✅ selesai |
+| 10. Notifikasi in-app warga (lonceng + kotak notifikasi) | ✅ selesai |
+| 11. Grafik tren harian di laporan | ✅ selesai |
+| 12. Laporan otomatis terjadwal (`laporan:buat` + scheduler) | ✅ selesai |
+| 13. Zona waktu WIB + berkas persiapan deploy | ✅ selesai |
 
-Test: **83 passed** (`php artisan test`).
+Test: **105 passed** (`php artisan test`).
+
+**Siap deploy?** Kodenya sudah; setelan servernya belum. Checklist lengkap ada di
+bagian bawah `.env.example` (APP_ENV/APP_DEBUG, user DB non-root, SMTP, cron
+`schedule:run`, `queue:work`, `npm run build`, izin tulis storage).
 
 **Akun demo** (password semua: `password`):
 `admin@kua.test` · `petugas@kua.test` · `warga@kua.test`
@@ -54,6 +62,7 @@ sistem_kua/
 │       │   ├── PublicController.php ............... 🟢 landing page
 │       │   ├── DashboardController.php ........... 🟢 dashboard per peran
 │       │   ├── ReservationController.php ........ 🟢 alur reservasi warga
+│       │   ├── NotificationController.php ...... 🟢 kotak notifikasi in-app
 │       │   ├── Petugas/ReservationController.php  🟢 verifikasi (setujui/tolak)
 │       │   ├── Petugas/QueueController.php ...... 🟢 papan antrean (panggil/layani)
 │       │   ├── Admin/ServiceController.php ..... 🟢 CRUD layanan
@@ -70,8 +79,11 @@ sistem_kua/
 │       └── Middleware/
 │           └── EnsureUserHasRole.php ............. 🟢 alias 'role'
 │
+├── app/Console/Commands/GenerateReport.php .......... 🟢 `laporan:buat` (dipakai scheduler)
+│
 ├── bootstrap/app.php ................................. 🟡 daftar alias middleware 'role'
 ├── routes/web.php ................................... 🔵 route landing + dashboard per peran
+├── routes/console.php ............................... 🟡 jadwal laporan harian/mingguan/bulanan
 │
 ├── database/
 │   ├── migrations/
@@ -102,12 +114,14 @@ sistem_kua/
 │   ├── admin/holidays/index.blade.php ....... 🟢 hari libur
 │   ├── admin/users/{index,form}.blade.php ... 🟢 CRUD akun
 │   ├── admin/reports/index.blade.php ........ 🟢 pratinjau periode + laporan tersimpan
-│   ├── admin/reports/show.blade.php ......... 🟢 rincian per layanan + daftar + unduh CSV
+│   ├── admin/reports/show.blade.php ......... 🟢 tren + rincian per layanan + daftar + CSV
+│   ├── notifications/index.blade.php ........ 🟢 kotak notifikasi warga/petugas/admin
+│   ├── components/report-trend.blade.php ... 🟢 grafik batang tren harian (tanpa JS)
 │   ├── components/status-badge.blade.php .... 🟢 komponen badge status
 │   ├── components/alert.blade.php ........... 🟢 flash + error validasi
 │   ├── components/petugas-tabs.blade.php ... 🟢 sub-navigasi petugas
 │   ├── components/admin-tabs.blade.php ..... 🟢 sub-navigasi admin (+ tab Laporan)
-│   ├── layouts/navigation.blade.php ......... 🔵 menu per peran
+│   ├── layouts/navigation.blade.php ......... 🔵 menu per peran + lonceng notifikasi
 │   └── auth/register.blade.php .............. 🔵 field No. HP
 │
 ├── tests/Feature/RoleRedirectTest.php .......... 🟢 6 test redirect & akses peran
@@ -116,6 +130,12 @@ sistem_kua/
 ├── tests/Feature/Petugas/QueueBoardTest.php .... 🟢 7 test papan antrean
 ├── tests/Feature/Admin/MasterDataTest.php ...... 🟢 20 test master data
 ├── tests/Feature/Admin/ReportTest.php .......... 🟢 10 test laporan & ekspor CSV
+├── tests/Feature/Admin/GenerateReportCommandTest.php  🟢 7 test perintah & tren harian
+├── tests/Feature/NotificationTest.php .......... 🟢 9 test notifikasi in-app
+├── tests/Feature/TimezoneTest.php .............. 🟢 6 test pengunci zona WIB
+│
+├── config/app.php ............................... 🟡 timezone default Asia/Jakarta
+├── .env.example ................................. 🟡 MySQL + APP_TIMEZONE + checklist deploy
 │
 └── (selain di atas) ........................... ⚪ bawaan Laravel 12 / Breeze
     routes/auth.php, app/Http/Controllers/Auth/* lainnya, resources/views/auth/*,
@@ -135,10 +155,11 @@ sistem_kua/
 
 ## Berikutnya (ronde selanjutnya)
 
-Alur inti (warga → petugas → admin) sudah lengkap. Sisa yang bisa digarap:
+Semua rencana ronde sebelumnya sudah dikerjakan. Kandidat berikutnya:
 
-1. **Notifikasi in-app** — `Notification` sudah terisi saat setujui/tolak, tapi warga belum punya
-   halaman/lonceng untuk membacanya (`User::appNotifications()`).
-2. **Grafik ringkas** di halaman laporan (tren reservasi per hari) — sekarang masih tabel saja.
-3. **Penjadwalan laporan otomatis** (mis. buat laporan harian lewat scheduler) — sekarang laporan
-   dibuat manual oleh admin.
+1. **Notifikasi saat status berubah selain setujui/tolak** — mis. pengingat H-1 sebelum jadwal,
+   atau saat antrean dipanggil (`QueueDetail::markAsCalled`).
+2. **Filter tanggal di papan antrean petugas** — sekarang papan antrean hanya menampilkan
+   hari ini (`QueueController`), belum bisa menengok hari lain.
+3. **Ekspor laporan ke PDF** (sekarang baru CSV).
+4. **Notifikasi terbaca lewat dashboard** — mis. 3 notifikasi terakhir muncul di dashboard warga.
