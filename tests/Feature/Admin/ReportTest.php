@@ -181,6 +181,30 @@ class ReportTest extends TestCase
         $this->assertStringContainsString('Pendaftaran Nikah', $csv);
     }
 
+    public function test_admin_can_export_report_as_pdf(): void
+    {
+        $date = '2026-03-12';
+        $this->makeReservation($date, Reservation::STATUS_COMPLETED);
+
+        $report = Report::generateFor(Report::TYPE_DAILY, $date, $this->admin->id);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.reports.pdf', $report));
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertStringContainsString('laporan-daily-2026-03-12.pdf',
+            $response->headers->get('content-disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
+    public function test_petugas_cannot_download_report_pdf(): void
+    {
+        $petugas = User::factory()->create(['role' => User::ROLE_PETUGAS]);
+        $report = Report::generateFor(Report::TYPE_DAILY, '2026-03-12', $this->admin->id);
+
+        $this->actingAs($petugas)->get(route('admin.reports.pdf', $report))->assertForbidden();
+    }
+
     public function test_admin_can_delete_report(): void
     {
         $report = Report::generateFor(Report::TYPE_DAILY, '2026-03-12', $this->admin->id);

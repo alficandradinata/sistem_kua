@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('laporan', [ReportController::class, 'store'])->name('reports.store');
             Route::get('laporan/{report}', [ReportController::class, 'show'])->name('reports.show');
             Route::get('laporan/{report}/ekspor', [ReportController::class, 'export'])->name('reports.export');
+            Route::get('laporan/{report}/pdf', [ReportController::class, 'exportPdf'])->name('reports.pdf');
             Route::delete('laporan/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
         });
 });

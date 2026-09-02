@@ -39,6 +39,7 @@ class Reservation extends Model
         'reservation_time',
         'status',
         'notes',
+        'reminded_at',
     ];
 
     protected function casts(): array
@@ -47,6 +48,7 @@ class Reservation extends Model
             'user_id' => 'integer',
             'service_id' => 'integer',
             'reservation_date' => 'date',
+            'reminded_at' => 'datetime',
         ];
     }
 
@@ -256,6 +258,30 @@ class Reservation extends Model
     public function complete(): bool
     {
         return $this->update(['status' => self::STATUS_COMPLETED]);
+    }
+
+    /**
+     * Kirim pengingat H-1 ke warga dan tandai supaya tidak terkirim dua kali.
+     */
+    public function sendReminder(): ?Notification
+    {
+        if ($this->reminded_at !== null) {
+            return null;
+        }
+
+        return DB::transaction(function (): Notification {
+            $pesan = "Pengingat: reservasi {$this->service->name} Anda dijadwalkan besok, "
+                ."{$this->full_date} pukul {$this->formatted_time}."
+                .($this->queueDetail
+                    ? " Nomor antrean Anda: {$this->queueDetail->queue_number}."
+                    : '');
+
+            $notification = Notification::send($this->user_id, $pesan);
+
+            $this->update(['reminded_at' => now()]);
+
+            return $notification;
+        });
     }
 
     public function cancel(): bool

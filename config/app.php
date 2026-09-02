@@ -84,7 +84,9 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // [SISTEM KUA] Default "id": bahasa UI & pesan validasi Indonesia (lang/id/*).
+    // fallback tetap "en" supaya kunci yang belum diterjemahkan tidak kosong.
+    'locale' => env('APP_LOCALE', 'id'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

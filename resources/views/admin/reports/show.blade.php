@@ -6,6 +6,10 @@
                 Laporan {{ $report->type_label }} &mdash; {{ $report->period_label }}
             </h2>
             <div class="flex gap-2">
+                <a href="{{ route('admin.reports.pdf', $report) }}"
+                   class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                    Unduh PDF
+                </a>
                 <a href="{{ route('admin.reports.export', $report) }}"
                    class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
                     Unduh CSV

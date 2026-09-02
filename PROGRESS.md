@@ -24,8 +24,11 @@ Legenda: 🟢 kita buat baru · 🟡 kita ubah dari bawaan · 🔵 kita ubah dar
 | 11. Grafik tren harian di laporan | ✅ selesai |
 | 12. Laporan otomatis terjadwal (`laporan:buat` + scheduler) | ✅ selesai |
 | 13. Zona waktu WIB + berkas persiapan deploy | ✅ selesai |
+| 14. Pengingat H-1 (`pengingat:reservasi`) | ✅ selesai |
+| 15. Ekspor laporan PDF (dompdf) | ✅ selesai |
+| 16. Bahasa Indonesia (validasi, auth, UI Breeze) | ✅ selesai |
 
-Test: **105 passed** (`php artisan test`).
+Test: **120 passed** (`php artisan test`).
 
 **Siap deploy?** Kodenya sudah; setelan servernya belum. Checklist lengkap ada di
 bagian bawah `.env.example` (APP_ENV/APP_DEBUG, user DB non-root, SMTP, cron
@@ -52,7 +55,7 @@ sistem_kua/
 │   │   ├── Service.php ............................. 🟢
 │   │   ├── Schedule.php ............................ 🟢
 │   │   ├── ServiceSlot.php ......................... 🟢 logika "slot penuh"
-│   │   ├── Reservation.php ......................... 🟢 ⭐ MODEL INTI
+│   │   ├── Reservation.php ......................... 🟢 ⭐ MODEL INTI (+ sendReminder)
 │   │   ├── QueueDetail.php ......................... 🟢
 │   │   ├── Notification.php ........................ 🟢
 │   │   ├── Holiday.php ............................. 🟢
@@ -70,7 +73,7 @@ sistem_kua/
 │       │   ├── Admin/ServiceSlotController.php  🟢 slot & kuota antrean
 │       │   ├── Admin/HolidayController.php .... 🟢 hari libur (+ peringatan bentrok)
 │       │   ├── Admin/UserController.php ....... 🟢 CRUD akun & peran
-│       │   ├── Admin/ReportController.php ..... 🟢 laporan: pratinjau, simpan, detail, CSV
+│       │   ├── Admin/ReportController.php ..... 🟢 laporan: pratinjau, simpan, detail, CSV, PDF
 │       │   └── Auth/AuthenticatedSessionController.php  🔵 redirect per peran
 │       │   └── Auth/RegisteredUserController.php . 🔵 set role=warga + phone
 │       ├── Requests/
@@ -79,17 +82,23 @@ sistem_kua/
 │       └── Middleware/
 │           └── EnsureUserHasRole.php ............. 🟢 alias 'role'
 │
-├── app/Console/Commands/GenerateReport.php .......... 🟢 `laporan:buat` (dipakai scheduler)
+├── app/Console/Commands/
+│   ├── GenerateReport.php ....................... 🟢 `laporan:buat` (dipakai scheduler)
+│   └── SendReservationReminders.php ............ 🟢 `pengingat:reservasi` (H-1)
 │
 ├── bootstrap/app.php ................................. 🟡 daftar alias middleware 'role'
 ├── routes/web.php ................................... 🔵 route landing + dashboard per peran
-├── routes/console.php ............................... 🟡 jadwal laporan harian/mingguan/bulanan
+├── routes/console.php ............................... 🟡 jadwal laporan + pengingat H-1
+│
+├── lang/id/{validation,auth,passwords,pagination}.php  🟢 pesan bahasa Indonesia
+├── lang/id.json ..................................... 🟢 string UI Breeze
 │
 ├── database/
 │   ├── migrations/
 │   │   ├── 2026_09_01_203203..204000_*.php ........ 🟢 8 tabel domain (lihat versi lama di git-less)
 │   │   ├── 2026_09_01_204100_add_role_to_users_table.php  🟢 kolom role + phone
-│   │   └── 2026_09_01_204200_harden_master_data_constraints.php  🟢 unique & FK master data
+│   │   ├── 2026_09_01_204200_harden_master_data_constraints.php  🟢 unique & FK master data
+│   │   └── 2026_09_02_090000_add_reminded_at_to_reservations_table.php  🟢 penanda pengingat
 │   ├── factories/UserFactory.php .................. 🟡 default role + ->role() state
 │   └── seeders/
 │       ├── DatabaseSeeder.php .................... 🟡 panggil 5 seeder
@@ -114,7 +123,8 @@ sistem_kua/
 │   ├── admin/holidays/index.blade.php ....... 🟢 hari libur
 │   ├── admin/users/{index,form}.blade.php ... 🟢 CRUD akun
 │   ├── admin/reports/index.blade.php ........ 🟢 pratinjau periode + laporan tersimpan
-│   ├── admin/reports/show.blade.php ......... 🟢 tren + rincian per layanan + daftar + CSV
+│   ├── admin/reports/show.blade.php ......... 🟢 tren + rincian + daftar + unduh CSV/PDF
+│   ├── admin/reports/pdf.blade.php .......... 🟢 template PDF (dompdf, tanpa Tailwind)
 │   ├── notifications/index.blade.php ........ 🟢 kotak notifikasi warga/petugas/admin
 │   ├── components/report-trend.blade.php ... 🟢 grafik batang tren harian (tanpa JS)
 │   ├── components/status-badge.blade.php .... 🟢 komponen badge status
@@ -133,9 +143,12 @@ sistem_kua/
 ├── tests/Feature/Admin/GenerateReportCommandTest.php  🟢 7 test perintah & tren harian
 ├── tests/Feature/NotificationTest.php .......... 🟢 9 test notifikasi in-app
 ├── tests/Feature/TimezoneTest.php .............. 🟢 6 test pengunci zona WIB
+├── tests/Feature/ReservationReminderTest.php ... 🟢 6 test pengingat H-1
+├── tests/Feature/LocalizationTest.php .......... 🟢 7 test pesan bahasa Indonesia
 │
-├── config/app.php ............................... 🟡 timezone default Asia/Jakarta
+├── config/app.php ............................... 🟡 timezone Asia/Jakarta + locale id
 ├── .env.example ................................. 🟡 MySQL + APP_TIMEZONE + checklist deploy
+├── composer.json ................................ 🟡 + barryvdh/laravel-dompdf (ekspor PDF)
 │
 └── (selain di atas) ........................... ⚪ bawaan Laravel 12 / Breeze
     routes/auth.php, app/Http/Controllers/Auth/* lainnya, resources/views/auth/*,
@@ -157,9 +170,12 @@ sistem_kua/
 
 Semua rencana ronde sebelumnya sudah dikerjakan. Kandidat berikutnya:
 
-1. **Notifikasi saat status berubah selain setujui/tolak** — mis. pengingat H-1 sebelum jadwal,
-   atau saat antrean dipanggil (`QueueDetail::markAsCalled`).
-2. **Filter tanggal di papan antrean petugas** — sekarang papan antrean hanya menampilkan
-   hari ini (`QueueController`), belum bisa menengok hari lain.
-3. **Ekspor laporan ke PDF** (sekarang baru CSV).
-4. **Notifikasi terbaca lewat dashboard** — mis. 3 notifikasi terakhir muncul di dashboard warga.
+1. **Notifikasi ringkas di dashboard warga** — mis. 3 notifikasi terakhir langsung terlihat
+   tanpa membuka halaman `/notifikasi`.
+2. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
+   di `routes/web.php` sekarang tidak berefek. Perlu SMTP dulu.
+3. **Terjemahan sisa UI** — teks di view kita ditulis langsung dalam bahasa Indonesia
+   (tidak lewat `__()`), jadi sudah Indonesia; yang lewat `__()` ada di `lang/id.json`.
+
+(Sudah ada, jangan dikerjakan ulang: filter tanggal papan antrean — `QueueController::index`
+menerima `?date=` dan view-nya punya date picker.)

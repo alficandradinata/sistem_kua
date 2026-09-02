@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReportRequest;
 use App\Models\Report;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -95,6 +97,25 @@ class ReportController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    /**
+     * Unduh laporan sebagai PDF siap cetak/arsip.
+     */
+    public function exportPdf(Report $report): Response
+    {
+        [$start, $end] = $report->range();
+
+        $pdf = Pdf::loadView('admin.reports.pdf', [
+            'report' => $report->load('generatedBy'),
+            'periodStart' => $start,
+            'periodEnd' => $end,
+            'breakdown' => $report->serviceBreakdown(),
+            'trend' => $start->isSameDay($end) ? null : $report->dailyTrend(),
+            'reservations' => $report->reservationsQuery()->get(),
+        ])->setPaper('a4');
+
+        return $pdf->download('laporan-'.$report->report_type.'-'.$report->report_date->toDateString().'.pdf');
     }
 
     public function destroy(Report $report): RedirectResponse

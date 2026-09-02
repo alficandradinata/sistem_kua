@@ -41,8 +41,19 @@ admin kelola master data & rekap laporan.
 - Laporan otomatis: perintah `php artisan laporan:buat --type=... --date=...`
   (`App\Console\Commands\GenerateReport`), dijadwalkan di `routes/console.php`
   (harian 23:55, mingguan Minggu 23:57, bulanan hari terakhir 23:59).
+- Ekspor laporan **PDF** (`barryvdh/laravel-dompdf`, template `admin/reports/pdf.blade.php`)
+  di samping CSV. Template PDF pakai CSS sederhana + tabel — dompdf tidak mendukung
+  flexbox/grid, jadi jangan pakai kelas Tailwind di situ.
+- Pengingat H-1: `php artisan pengingat:reservasi` (`SendReservationReminders`), dijadwalkan
+  17:00 tiap hari. `Reservation::sendReminder()` menandai kolom `reminded_at` supaya tidak
+  mengirim dua kali.
+- **Bahasa Indonesia**: `lang/id/{validation,auth,passwords,pagination}.php` + `lang/id.json`
+  untuk string UI Breeze. `config/app.php` default locale `id` (fallback `en`).
+  Pesan validasi ditulis agar `:attribute` tidak pernah di awal kalimat — kalau di awal,
+  hurufnya jadi kecil ("email sudah digunakan"). Nama kolom ada di bagian `attributes`.
 
-**Belum ada:** ekspor PDF, filter tanggal di papan antrean, pengingat H-1.
+**Belum ada:** notifikasi ringkas di dashboard warga, verifikasi email aktif (User belum
+implement `MustVerifyEmail`), SMTP produksi.
 
 ## Stack
 
@@ -75,6 +86,7 @@ php artisan test --filter=NamaTest     # satu test / method
 ./vendor/bin/pint                      # format kode (jalankan sebelum selesai)
 
 php artisan laporan:buat --type=weekly  # buat laporan manual (dipakai scheduler)
+php artisan pengingat:reservasi        # kirim pengingat H-1 manual
 php artisan schedule:list              # cek jadwal laporan otomatis
 php artisan schedule:work              # jalankan scheduler saat dev
 
