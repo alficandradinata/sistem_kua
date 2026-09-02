@@ -139,6 +139,7 @@ sistem_kua/
 │       └── AutoReplySeeder.php ............... 🟢 balasan WA bawaan
 │
 ├── resources/views/
+│   ├── public/queue.blade.php ............... 🟢 layar antrean ruang tunggu (nomor saja)
 │   ├── public/home.blade.php .................... 🟢 landing page
 │   ├── dashboard.blade.php ..................... 🔵 dashboard warga + Reservasi Saya
 │   ├── reservations/create.blade.php .......... 🟢 form 2 langkah (layanan+tanggal → slot)
@@ -168,6 +169,7 @@ sistem_kua/
 │
 ├── tests/Feature/RoleRedirectTest.php .......... 🟢 6 test redirect & akses peran
 ├── tests/Feature/ReservationFlowTest.php ....... 🟢 11 test alur reservasi (+ kuota lepas saat ditolak)
+├── tests/Feature/PublicQueueDisplayTest.php .... 🟢 5 test layar antrean & penjagaan privasi
 ├── tests/Feature/Petugas/ReservationVerificationTest.php  🟢 11 test verifikasi, penolakan & audit
 ├── tests/Feature/Petugas/QueueBoardTest.php .... 🟢 9 test papan antrean (+ jejak petugas loket)
 ├── tests/Feature/Admin/MasterDataTest.php ...... 🟢 22 test master data (+ akun berjejak audit)
@@ -209,19 +211,18 @@ Baru selesai:
   petugas dari reservasi yang dibatalkan warga.
 - **Jejak audit** — setiap persetujuan, penolakan, dan pemanggilan antrean tercatat
   pelakunya; akun petugas yang punya jejak tidak bisa dihapus.
+- **Paginasi dashboard warga** — dulu mengambil semua riwayat sekaligus, kini `paginate(10)`.
+- **Layar antrean publik** `/antrean` — nomor saja, tanpa nama warga & jenis layanan
+  (keputusan privasi, dikunci test). Auto-refresh 15 detik tanpa JS.
 
 Antre berikutnya, urut prioritas:
 
-1. **Paginasi dashboard warga** — `DashboardController::warga()` mengambil SEMUA reservasi
-   milik user tanpa paginasi. (Detail laporan sudah `paginate(15)`, tidak perlu diapa-apakan.)
-2. **Layar antrean publik** — `/antrean` tanpa login untuk ditayangkan di TV ruang tunggu.
-   Datanya sudah lengkap, tinggal view + auto-refresh. Nilai demo tinggi, effort rendah.
-3. **Tiket antrean bisa dicetak** — belum ada satu pun halaman cetak.
-4. **Ubah jadwal (reschedule)** — sekarang warga harus batal lalu pesan ulang.
-5. **Notifikasi ringkas di dashboard warga** — 3 notifikasi terakhir tanpa buka `/notifikasi`.
-6. **WhatsApp lanjutan** — pesan gambar/lokasi (sekarang diabaikan), status pengiriman
+1. **Tiket antrean bisa dicetak** — belum ada satu pun halaman cetak.
+2. **Ubah jadwal (reschedule)** — sekarang warga harus batal lalu pesan ulang.
+3. **Notifikasi ringkas di dashboard warga** — 3 notifikasi terakhir tanpa buka `/notifikasi`.
+4. **WhatsApp lanjutan** — pesan gambar/lokasi (sekarang diabaikan), status pengiriman
    (`statuses[]` dari webhook), penugasan percakapan ke petugas tertentu.
-7. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
+5. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
    di `routes/web.php` sekarang **tidak berefek sama sekali** (kelihatan aman padahal tidak).
    Perlu SMTP dulu; kalau belum ada, minimal copot `verified` dari route group.
 

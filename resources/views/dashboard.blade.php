@@ -67,6 +67,10 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        @if ($reservations->hasPages())
+                            <div class="mt-4">{{ $reservations->links() }}</div>
+                        @endif
                     @endif
                 </div>
             </div>

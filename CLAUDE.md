@@ -15,6 +15,10 @@ admin kelola master data & rekap laporan.
   redirect pasca-login per peran (`User::homeRoute()`).
 - Landing page publik `/` (`PublicController`); dashboard per peran (`DashboardController` →
   `/dashboard`, `/petugas`, `/admin`).
+- Layar antrean ruang tunggu `/antrean` (`PublicController::queue`, tanpa login) — auto-refresh
+  15 detik lewat `<meta http-equiv="refresh">`, tanpa JS. **Isinya nomor antrean saja:**
+  halaman ini terbaca semua orang di ruang tunggu dan sebagian layanan KUA sensitif, jadi
+  jangan menambahkan nama warga atau jenis layanan. Dikunci `PublicQueueDisplayTest`.
 - Alur reservasi warga (`ReservationController`, route `reservasi/*`): form 2 langkah
   (layanan+tanggal → slot), store dgn cek `Holiday::isHoliday` / `Schedule::isOpenOn` /
   `ServiceSlot::isAvailable` / anti double-book, show, cancel.

@@ -27,7 +27,9 @@ class DashboardController extends Controller
     public function warga()
     {
         return view('dashboard', [
-            'reservations' => auth()->user()->reservations()->with('service')->latest()->get(),
+            // Dipaginasi: warga aktif bisa punya ratusan baris riwayat, dan
+            // semuanya ikut terambil tiap kali dashboard dibuka.
+            'reservations' => auth()->user()->reservations()->with('service')->latest()->paginate(10),
         ]);
     }
 

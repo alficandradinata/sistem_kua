@@ -21,6 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
 
+// Layar antrean ruang tunggu — sengaja tanpa login, isinya nomor antrean saja.
+Route::get('/antrean', [PublicController::class, 'queue'])->name('queue.display');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Warga
     Route::get('/dashboard', [DashboardController::class, 'warga'])->name('dashboard');

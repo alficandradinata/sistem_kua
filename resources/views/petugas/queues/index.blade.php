@@ -1,7 +1,14 @@
 {{-- [SISTEM KUA] Papan antrean harian petugas. Lihat PROGRESS.md. --}}
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">Papan Antrean</h2>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">Papan Antrean</h2>
+            {{-- Dibuka di tab baru untuk ditayangkan di layar ruang tunggu --}}
+            <a href="{{ route('queue.display') }}" target="_blank" rel="noopener"
+               class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                Buka Layar Antrean
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-10">
