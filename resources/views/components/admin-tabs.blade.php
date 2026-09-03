@@ -12,14 +12,14 @@
     ];
 @endphp
 
-<nav class="flex flex-wrap gap-1 border-b border-gray-200">
+<nav class="flex flex-wrap gap-x-1 border-b border-stone-200">
     @foreach ($tabs as $tab)
         @php $active = request()->routeIs($tab['pattern']); @endphp
         <a href="{{ route($tab['route']) }}"
-           class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition
+           class="-mb-px border-b-2 px-4 py-2.5 text-sm transition
                   {{ $active
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }}">
+                        ? 'border-kua-700 font-semibold text-kua-800'
+                        : 'border-transparent font-medium text-stone-500 hover:border-stone-300 hover:text-stone-800' }}">
             {{ $tab['label'] }}
         </a>
     @endforeach

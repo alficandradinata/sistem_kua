@@ -2,7 +2,7 @@
 @php $editing = $service->exists; @endphp
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">
+        <h2 class="text-xl font-semibold leading-tight text-stone-800">
             {{ $editing ? 'Ubah Layanan' : 'Tambah Layanan' }}
         </h2>
     </x-slot>
@@ -28,7 +28,7 @@
                 <div>
                     <x-input-label for="description" value="Deskripsi" />
                     <textarea id="description" name="description" rows="3"
-                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-kua-500 focus:ring-kua-500"
                     >{{ old('description', $service->description) }}</textarea>
                     <x-input-error :messages="$errors->get('description')" class="mt-2" />
                 </div>
@@ -44,20 +44,20 @@
                         <x-input-label for="fee" value="Biaya (Rp)" />
                         <x-text-input id="fee" name="fee" type="number" min="0" step="1000"
                                       class="mt-1 block w-full" :value="old('fee', (int) $service->fee)" required />
-                        <p class="mt-1 text-xs text-gray-500">Isi 0 bila layanan gratis.</p>
+                        <p class="mt-1 text-xs text-stone-500">Isi 0 bila layanan gratis.</p>
                         <x-input-error :messages="$errors->get('fee')" class="mt-2" />
                     </div>
                 </div>
 
                 <label class="flex items-center gap-2">
                     <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $service->is_active))
-                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm text-gray-700">Aktif (muncul di form reservasi warga)</span>
+                           class="rounded border-stone-300 text-kua-600 focus:ring-kua-500">
+                    <span class="text-sm text-stone-700">Aktif (muncul di form reservasi warga)</span>
                 </label>
 
-                <div class="flex items-center gap-3 border-t border-gray-100 pt-4">
+                <div class="flex items-center gap-3 border-t border-stone-100 pt-4">
                     <x-primary-button>{{ $editing ? 'Simpan Perubahan' : 'Simpan' }}</x-primary-button>
-                    <a href="{{ route('admin.services.index') }}" class="text-sm text-gray-600 hover:text-gray-900">Batal</a>
+                    <a href="{{ route('admin.services.index') }}" class="text-sm text-stone-600 hover:text-stone-900">Batal</a>
                 </div>
             </form>
         </div>

@@ -242,14 +242,14 @@ class Reservation extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING => 'bg-yellow-100 text-yellow-800',
-            self::STATUS_APPROVED => 'bg-blue-100 text-blue-800',
-            self::STATUS_COMPLETED => 'bg-green-100 text-green-800',
+            self::STATUS_PENDING => 'bg-amber-50 text-amber-800 ring-amber-600/20',
+            self::STATUS_APPROVED => 'bg-sky-50 text-sky-800 ring-sky-600/20',
+            self::STATUS_COMPLETED => 'bg-kua-50 text-kua-800 ring-kua-600/20',
             // Dibatalkan warga = netral; ditolak petugas = merah, karena
             // yang kedua butuh tindak lanjut warga (perbaiki berkas, ajukan ulang).
-            self::STATUS_CANCELLED => 'bg-gray-200 text-gray-700',
-            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
-            default => 'bg-gray-100 text-gray-800',
+            self::STATUS_CANCELLED => 'bg-stone-100 text-stone-600 ring-stone-500/20',
+            self::STATUS_REJECTED => 'bg-rose-50 text-rose-800 ring-rose-600/20',
+            default => 'bg-stone-100 text-stone-700 ring-stone-500/20',
         };
     }
 

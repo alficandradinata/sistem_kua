@@ -179,6 +179,20 @@ penyusun teks balasan, bukan aturan domain — `WhatsAppGateway` + `LogGateway`/
   hangus. Daftarnya ada di `Reservation::STATUSES_INACTIVE`.
 - **Peran**: gate route dgn middleware `role:admin` / `role:petugas,admin`.
   `User::factory()->role($r)` untuk test. Registrasi publik selalu `warga`.
+- **Sistem desain** (token di `tailwind.config.js`, base style di `resources/css/app.css`):
+  - `kua-*` = hijau institusional (warna Kementerian Agama) — navigasi, tombol utama,
+    penanda aktif. `emas-*` = aksen, **hanya untuk garis rambut, badge, dan angka
+    penting**; kalau dipakai sebagai bidang latar yang luas kesannya jatuh jadi norak.
+  - Netral memakai **`stone`** (hangat), **bukan `gray`** (dingin). Ini yang paling
+    menentukan kesan "mewah" — jangan dikembalikan ke `gray`.
+  - Font: `font-sans` = Plus Jakarta Sans (UI), `font-display` = Lora (judul & angka
+    besar saja, jangan untuk teks panjang). `h1/h2/h3` sudah otomatis serif lewat
+    `@layer base`, tidak perlu ditempel per view.
+  - Utility `.garis-emas` = gradient emas untuk garis rambut / kepala kartu.
+  - Bayangan: `shadow-kartu` (diam) dan `shadow-naik` (hover/menonjol). Jangan pakai
+    `shadow-md`/`shadow-lg` bawaan — terlalu pekat, berkesan murah.
+  - Warna semantik dipetakan hangat: sukses→`kua`, bahaya→`rose`, tunggu→`amber`,
+    info→`sky`. Badge status datang dari `Reservation::status_color`, bukan dari view.
 - **Penanda `[SISTEM KUA]`** di setiap file yang kita buat/ubah (bukan file bawaan Breeze murni).
   Peta lengkap di `PROGRESS.md`.
 - **Migration** bertanggal `2026_09_01_*`; urutan penting. FK `->constrained()->onDelete('cascade')`.

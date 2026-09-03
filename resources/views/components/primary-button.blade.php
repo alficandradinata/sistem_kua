@@ -1,3 +1,4 @@
-<button {{ $attributes->merge(['type' => 'submit', 'class' => 'inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150']) }}>
+{{-- [SISTEM KUA] Tombol aksi utama. --}}
+<button {{ $attributes->merge(['type' => 'submit', 'class' => 'inline-flex items-center justify-center rounded-lg bg-kua-700 px-5 py-2.5 text-sm font-semibold text-white shadow-kartu transition hover:bg-kua-600 active:bg-kua-800 disabled:cursor-not-allowed disabled:opacity-50']) }}>
     {{ $slot }}
 </button>

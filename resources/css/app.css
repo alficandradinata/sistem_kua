@@ -6,3 +6,40 @@
 [x-cloak] {
     display: none !important;
 }
+
+@layer base {
+    /* Angka disejajarkan (tabular) di seluruh sistem: nomor antrean, kuota, dan
+       angka laporan sering ditumpuk vertikal — kalau lebarnya tidak sama,
+       kolomnya terlihat bergoyang. */
+    body {
+        font-variant-numeric: tabular-nums;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Judul pakai serif Lora. Ditulis di sini, bukan ditempel manual di tiap
+       view, supaya tidak ada halaman yang ketinggalan. */
+    h1, h2, h3 {
+        font-family: theme('fontFamily.display');
+        letter-spacing: -0.01em;
+    }
+
+    /* Cincin fokus mengikuti warna identitas, bukan biru bawaan browser.
+       Jangan dihapus — ini satu-satunya penanda posisi bagi pengguna keyboard. */
+    :focus-visible {
+        outline: 2px solid theme('colors.kua.600');
+        outline-offset: 2px;
+    }
+}
+
+@layer components {
+    /* Garis rambut emas. Dipakai sebagai penutup atas kartu penting dan di bawah
+       navigasi — satu-satunya tempat emas boleh muncul sebagai bidang. */
+    .garis-emas {
+        background-image: linear-gradient(
+            to right,
+            theme('colors.emas.400'),
+            theme('colors.emas.200') 45%,
+            transparent
+        );
+    }
+}

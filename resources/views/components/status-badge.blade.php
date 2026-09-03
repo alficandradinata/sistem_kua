@@ -1,9 +1,10 @@
-{{-- [SISTEM KUA] Badge status reservasi. --}}
+{{-- [SISTEM KUA] Badge status reservasi. Warnanya datang dari accessor model
+     (Reservation::status_color), bukan ditentukan di sini. --}}
 @props(['status' => '', 'label' => null, 'color' => null])
 
 <span {{ $attributes->merge([
-    'class' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium '
-        .($color ?? 'bg-gray-100 text-gray-800'),
+    'class' => 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset '
+        .($color ?? 'bg-stone-100 text-stone-700 ring-stone-600/15'),
 ]) }}>
     {{ $label ?? $slot }}
 </span>

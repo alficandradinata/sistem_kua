@@ -2,7 +2,7 @@
 @php $editing = $user->exists; @endphp
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">
+        <h2 class="text-xl font-semibold leading-tight text-stone-800">
             {{ $editing ? 'Ubah Akun' : 'Tambah Akun' }}
         </h2>
     </x-slot>
@@ -44,26 +44,26 @@
                         <x-input-label for="role" value="Peran" />
                         <select id="role" name="role" required
                                 @disabled($editing && $user->is(auth()->user()))
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100">
+                                class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-kua-500 focus:ring-kua-500 disabled:bg-stone-100">
                             @foreach (App\Models\User::ROLES as $value => $label)
                                 <option value="{{ $value }}" @selected(old('role', $user->role) === $value)>{{ $label }}</option>
                             @endforeach
                         </select>
                         @if ($editing && $user->is(auth()->user()))
                             <input type="hidden" name="role" value="{{ $user->role }}">
-                            <p class="mt-1 text-xs text-gray-500">Peran akun sendiri tidak bisa diubah.</p>
+                            <p class="mt-1 text-xs text-stone-500">Peran akun sendiri tidak bisa diubah.</p>
                         @endif
                         <x-input-error :messages="$errors->get('role')" class="mt-2" />
                     </div>
                 </div>
 
-                <div class="grid gap-5 border-t border-gray-100 pt-5 sm:grid-cols-2">
+                <div class="grid gap-5 border-t border-stone-100 pt-5 sm:grid-cols-2">
                     <div>
                         <x-input-label for="password" :value="$editing ? 'Kata sandi baru (opsional)' : 'Kata sandi'" />
                         <x-text-input id="password" name="password" type="password" class="mt-1 block w-full"
                                       autocomplete="new-password" :required="! $editing" />
                         @if ($editing)
-                            <p class="mt-1 text-xs text-gray-500">Kosongkan bila tidak ingin mengubah sandi.</p>
+                            <p class="mt-1 text-xs text-stone-500">Kosongkan bila tidak ingin mengubah sandi.</p>
                         @endif
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
@@ -74,9 +74,9 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 border-t border-gray-100 pt-4">
+                <div class="flex items-center gap-3 border-t border-stone-100 pt-4">
                     <x-primary-button>{{ $editing ? 'Simpan Perubahan' : 'Buat Akun' }}</x-primary-button>
-                    <a href="{{ route('admin.users.index') }}" class="text-sm text-gray-600 hover:text-gray-900">Batal</a>
+                    <a href="{{ route('admin.users.index') }}" class="text-sm text-stone-600 hover:text-stone-900">Batal</a>
                 </div>
             </form>
         </div>

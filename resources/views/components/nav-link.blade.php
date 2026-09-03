@@ -1,9 +1,12 @@
+{{-- [SISTEM KUA] Tautan navigasi utama — dipakai di atas bilah hijau gelap. --}}
 @props(['active'])
 
 @php
-$classes = ($active ?? false)
-            ? 'inline-flex items-center px-1 pt-1 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out'
-            : 'inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out';
+    // Penanda aktif: garis emas di bawah + teks putih. Tidak mengandalkan warna
+    // saja — bobot hurufnya ikut naik, supaya tetap terbaca kalau warnanya lolos.
+    $classes = ($active ?? false)
+        ? 'inline-flex items-center border-b-2 border-emas-400 px-1 pt-1 text-sm font-semibold leading-5 text-white transition'
+        : 'inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-kua-100 transition hover:border-kua-400 hover:text-white';
 @endphp
 
 <a {{ $attributes->merge(['class' => $classes]) }}>
