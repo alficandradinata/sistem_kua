@@ -170,6 +170,7 @@ sistem_kua/
 ├── tests/Feature/RoleRedirectTest.php .......... 🟢 6 test redirect & akses peran
 ├── tests/Feature/ReservationFlowTest.php ....... 🟢 11 test alur reservasi (+ kuota lepas saat ditolak)
 ├── tests/Feature/PublicQueueDisplayTest.php .... 🟢 5 test layar antrean & penjagaan privasi
+├── tests/Feature/WargaDashboardDecisionsTest.php  🟢 5 test panel kabar keputusan
 ├── tests/Feature/Petugas/ReservationVerificationTest.php  🟢 11 test verifikasi, penolakan & audit
 ├── tests/Feature/Petugas/QueueBoardTest.php .... 🟢 9 test papan antrean (+ jejak petugas loket)
 ├── tests/Feature/Admin/MasterDataTest.php ...... 🟢 22 test master data (+ akun berjejak audit)
@@ -214,15 +215,18 @@ Baru selesai:
 - **Paginasi dashboard warga** — dulu mengambil semua riwayat sekaligus, kini `paginate(10)`.
 - **Layar antrean publik** `/antrean` — nomor saja, tanpa nama warga & jenis layanan
   (keputusan privasi, dikunci test). Auto-refresh 15 detik tanpa JS.
+- **Rombak tampilan** — palet hijau institusional + aksen emas, netral hangat `stone`,
+  Plus Jakarta Sans + Lora. Token di `tailwind.config.js`.
+- **Panel "Kabar Terbaru"** di dashboard warga — keputusan disetujui/ditolak tampil
+  langsung berikut nomor antrean / alasan penolakan, tidak cuma di lonceng.
 
 Antre berikutnya, urut prioritas:
 
 1. **Tiket antrean bisa dicetak** — belum ada satu pun halaman cetak.
 2. **Ubah jadwal (reschedule)** — sekarang warga harus batal lalu pesan ulang.
-3. **Notifikasi ringkas di dashboard warga** — 3 notifikasi terakhir tanpa buka `/notifikasi`.
-4. **WhatsApp lanjutan** — pesan gambar/lokasi (sekarang diabaikan), status pengiriman
+3. **WhatsApp lanjutan** — pesan gambar/lokasi (sekarang diabaikan), status pengiriman
    (`statuses[]` dari webhook), penugasan percakapan ke petugas tertentu.
-5. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
+4. **Verifikasi email** — `User` belum implement `MustVerifyEmail`, jadi middleware `verified`
    di `routes/web.php` sekarang **tidak berefek sama sekali** (kelihatan aman padahal tidak).
    Perlu SMTP dulu; kalau belum ada, minimal copot `verified` dari route group.
 

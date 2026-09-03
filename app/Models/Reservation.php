@@ -181,6 +181,32 @@ class Reservation extends Model
         return $query->whereDate('reservation_date', '>=', today())->active();
     }
 
+    /**
+     * Reservasi yang baru saja diputuskan petugas — disetujui atau ditolak.
+     *
+     * Dipakai dashboard warga untuk memunculkan kabar keputusan tanpa warga
+     * harus membuka lonceng notifikasi. Dibatasi rentang hari supaya panelnya
+     * hilang sendiri, jadi tidak perlu menyimpan status "sudah dibaca" baru.
+     *
+     * Diurutkan pakai COALESCE karena satu reservasi hanya punya salah satu
+     * dari kedua kolom waktu itu.
+     */
+    public function scopeRecentlyDecided(Builder $query, int $days = 7): Builder
+    {
+        $sejak = now()->subDays($days);
+
+        return $query
+            ->where(function (Builder $q) use ($sejak) {
+                $q->where(fn (Builder $sub) => $sub
+                    ->where('status', self::STATUS_APPROVED)
+                    ->where('approved_at', '>=', $sejak))
+                    ->orWhere(fn (Builder $sub) => $sub
+                        ->where('status', self::STATUS_REJECTED)
+                        ->where('rejected_at', '>=', $sejak));
+            })
+            ->orderByRaw('COALESCE(rejected_at, approved_at) DESC');
+    }
+
     // --- Accessors ---
 
     /**

@@ -38,6 +38,11 @@ admin kelola master data & rekap laporan.
   `Report::generateFor()` (satu periode = satu baris, digenerate ulang = diperbarui) →
   halaman rincian per layanan + daftar reservasi + ekspor CSV.
 
+- Panel **"Kabar Terbaru"** di dashboard warga: keputusan petugas (disetujui/ditolak)
+  tampil langsung di halaman, tidak hanya di lonceng. Sumbernya
+  `Reservation::scopeRecentlyDecided()` yang menyaring `approved_at`/`rejected_at`
+  dalam 7 hari terakhir — panelnya hilang sendiri, jadi tidak perlu kolom
+  "sudah dibaca" baru. Dikunci `WargaDashboardDecisionsTest`.
 - Notifikasi in-app (`NotificationController`, route `notifikasi*`, semua peran): lonceng +
   badge di navbar (`User::unreadNotificationCount()`), kotak notifikasi dengan filter
   belum dibaca, tandai dibaca (satu/semua), hapus.
@@ -62,7 +67,7 @@ admin kelola master data & rekap laporan.
   sistem ikut dikirim ke WA. Panel `admin/whatsapp` (status + CRUD balasan + kirim uji) dan
   inbox koordinasi `petugas/whatsapp` (baca & balas manual).
 
-**Belum ada:** notifikasi ringkas di dashboard warga, verifikasi email aktif (User belum
+**Belum ada:** verifikasi email aktif (User belum
 implement `MustVerifyEmail`), SMTP produksi.
 
 ## Stack
