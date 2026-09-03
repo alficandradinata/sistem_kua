@@ -220,6 +220,12 @@ Baru selesai:
 - **Panel "Kabar Terbaru"** di dashboard warga — keputusan disetujui/ditolak tampil
   langsung berikut nomor antrean / alasan penolakan, tidak cuma di lonceng.
 
+**Status kesiapan (dicek 2026-09-03):** layak untuk demo/sidang/portofolio — 181 test hijau,
+alur inti lengkap, tampilan sudah dirombak. **Belum layak dipakai KUA sungguhan** karena dua
+hal operasional (bukan bug kode): verifikasi email masih dummy & `MAIL_MAILER=log` (lihat
+poin 4 di bawah). Kalau ditanya lagi "sudah layak dipakai?" — jawabannya masih ini, kecuali
+ada perubahan pada dua poin itu.
+
 Antre berikutnya, urut prioritas:
 
 1. **Tiket antrean bisa dicetak** — belum ada satu pun halaman cetak.
@@ -230,9 +236,17 @@ Antre berikutnya, urut prioritas:
    di `routes/web.php` sekarang **tidak berefek sama sekali** (kelihatan aman padahal tidak).
    Perlu SMTP dulu; kalau belum ada, minimal copot `verified` dari route group.
 
-Rapi-rapi kecil yang belum dikerjakan: `AutoReplySeeder` belum tercatat di daftar seeder
-CLAUDE.md; judul halaman semua sama (`layouts/app.blade.php` cuma pakai `config('app.name')`);
-belum ada favicon; `resources/views/welcome.blade.php` bawaan Laravel masih menganggur.
+Rapi-rapi kecil yang belum dikerjakan:
+- `AutoReplySeeder` belum tercatat di daftar seeder CLAUDE.md.
+- **Judul halaman: mekanismenya sudah ada** (`layouts/app.blade.php` & `guest.blade.php`
+  baca slot `$title`, jatuh ke nama aplikasi kalau kosong — ditambahkan saat rombak
+  tampilan), **tapi baru dipasang di 2 dari 26 halaman** (`dashboard`, `reservations/show`).
+  24 halaman sisanya (admin/*, petugas/*, auth/*) masih tampil nama aplikasi generik di tab.
+  Tinggal tambah `<x-slot name="title">…</x-slot>` di tiap view yang belum.
+- **`public/favicon.ico` ada tapi isinya 0 byte** (placeholder kosong, bukan favicon asli) —
+  masih perlu diisi ikon sungguhan.
+- `resources/views/welcome.blade.php` bawaan Laravel masih menganggur, tidak dipakai
+  (landing pakai `public/home.blade.php`). Aman dihapus.
 
 (Sudah ada, jangan dikerjakan ulang: filter tanggal papan antrean — `QueueController::index`
 menerima `?date=` dan view-nya punya date picker.)
